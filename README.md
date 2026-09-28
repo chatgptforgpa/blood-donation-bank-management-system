@@ -2,18 +2,7 @@
 
 Course project for managing donors, donation events, blood units, hospital requests, and blood issuance.
 
-## Current work (Week 3)
 
-| Area | Owner | Deliverable | Target |
-| --- | --- | --- | --- |
-| Data Modelling | Thư, Khôi | Final business rules and ERDPlus diagram; relational schema draft | 29 Sep 2026 |
-| Queries | Bảo Thy, Kim Ngân | Query Matrix v2 draft for DM review | 30 Sep 2026 |
-| Queries | Bảo Thy, Kim Ngân | Query Matrix v2 final after DM feedback | 2 Oct 2026 |
-| Database Design | Mẫn, Project Leader | Constraint Matrix v1 and transaction plan | 2 Oct 2026 |
-| Java Dev - Frontend | Trúc Linh | Main screens, app flow, and data needs; Screen Flow draft | 2 Oct 2026 |
-| Java Dev - Backend | Trí Phúc | JDBC direction, DAO flow, and database operations draft | 2 Oct 2026 |
-| Frontend & QA lead | Khánh Linh | Review Java Dev Screen Flow and JDBC/DB Operation Draft with Project Leader | 2 Oct 2026 |
-| QA & W3 handoff | Khánh Linh and three group leads | QA checklist, cross-group review, close blockers, freeze W3 baseline, and handoff to W4 | 4 Oct 2026 |
 
 The ERDPlus diagram is the reference for the conceptual data model. Business rules and the relational schema should be versioned alongside it as the team finalizes them. Java Dev can draft screens and application flow now; database operations should be checked against the finalized DM schema and constraints.
 
