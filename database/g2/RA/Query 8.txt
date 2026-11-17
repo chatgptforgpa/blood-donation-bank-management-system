@@ -1,0 +1,4 @@
+CRITICAL = π request_id (σ urgency_level = 'Critical' (REQUEST))
+ISSUED = π request_id (ISSUE_RECORD)
+NOT_ISSUED = CRITICAL - ISSUED
+π request_id, hospital_name, request_date, blood_group, quantity_needed(NOT_ISSUED ⋈ REQUEST ⋈ HOSPITAL)
