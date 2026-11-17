@@ -1,0 +1,3 @@
+LATEST = γ donor_id; max(donation_date)->last_donation_date (DONATION_EVENT)
+ELIGIBLE = σ last_donation_date <= date('2026-09-19') (LATEST)
+π donor_id, full_name, blood_group, rh_factor, last_donation_date(DONOR ⋈ ELIGIBLE)

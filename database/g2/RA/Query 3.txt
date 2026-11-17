@@ -1,0 +1,6 @@
+J = REQUEST ⋈ REQUEST.request_id = ISSUE_RECORD.request_id ISSUE_RECORD
+F = σ REQUEST.status = 'Partially Filled' and REQUEST.request_date >= date('2026-10-01') and REQUEST.request_date < date('2026-11-01') (J)
+C = γ REQUEST.request_id, REQUEST.quantity_needed; count(ISSUE_RECORD.unit_id)->fulfilled_quantity (F)
+S = π request_id, quantity_needed, fulfilled_quantity, (quantity_needed - fulfilled_quantity)->shortage_quantity (C)
+
+σ shortage_quantity > 0 and fulfilled_quantity > 0 (S)

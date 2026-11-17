@@ -17,6 +17,7 @@ out/
 .classpath
 
 # Local environment and secrets
+db.properties
 .env
 .env.*
 !.env.example
