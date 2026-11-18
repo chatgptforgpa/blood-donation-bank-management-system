@@ -33,7 +33,7 @@ python generate_seed_2000.py --as-of 2026-11-22
 
 Sau khi sinh lại, chạy `rebuild.sql` và cập nhật expected/actual của QD theo cùng ngày tham chiếu. Các query thời gian cần cùng một bộ seed và cùng ngày tham chiếu để đối chiếu được kết quả.
 
-Thư mục `RA` trong gói này là bản chụp theo ngày 14/11/2026, gồm dữ liệu `Blood_Bank.txt`, bốn biểu thức Q1/Q2/Q3/Q8 và bốn query tree. Generator chỉ tạo lại seed và rebuild; khi dùng ngày khác, cần đồng bộ lại dữ liệu RA, các mốc ngày trong biểu thức và ảnh tree/kết quả bị thay đổi.
+Thư mục `RA` trong gói này là bản chụp theo ngày 14/11/2026, gồm dữ liệu `Blood_Bank.txt`, bốn biểu thức Q1/Q2/Q3/Q8 và bốn query tree (vẽ bằng RelaX). Generator chỉ tạo lại seed và rebuild; khi dùng ngày khác, cần đồng bộ lại dữ liệu RA, các mốc ngày trong biểu thức và ảnh tree/kết quả bị thay đổi.
 
 Seed có các issue lịch sử và trạng thái đã tính sẵn. File rebuild nạp chúng trước khi cài trigger nghiệp vụ cho thao tác vận hành.
 
@@ -58,6 +58,7 @@ DBMS đã kiểm tra: MySQL 8.0.46 và MySQL Community Server 26.10.0 (macOS). Q
 - Đã dựng lại DB và chạy 12 query cho từng ngày từ 18/11/2026 đến 30/06/2027 (giả lập ngày bằng `SET timestamp`): không lỗi, không query nào rỗng. 10 query cho số dòng không đổi; Q3 và Q10 tính theo tháng dương lịch nên số dòng thay đổi theo ngày trong tháng (ít nhất 6 và 9 dòng).
 - `generate_seed_2000.py` có thêm `--reference-date`. Bản hiện tại tương ứng `--as-of 2026-11-14 --reference-date 2026-11-17`. Faker không cố định tên nên sinh lại sẽ ra tên và địa chỉ khác.
 - Q9 là join 8 bảng (7 lệnh INNER JOIN); sửa lại chú thích trong `queries.sql`.
+- Vẽ lại bốn query tree Q1, Q2, Q3, Q8 bằng RelaX (cùng một kiểu vẽ, cùng cỡ chữ), lưu thành `RA/tree - 1.png` … `tree - 8.png`, thay cho các ảnh `result - *.jpg` cũ. Số dòng ở từng nút khớp với kết quả MySQL.
 
 ## Thay đổi ngày 17/11/2026
 
