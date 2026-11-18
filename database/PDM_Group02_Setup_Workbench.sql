@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS BLOOD_BANK (
     location VARCHAR(255) NOT NULL,
     open_time TIME NOT NULL,
     close_time TIME NOT NULL,
-    PRIMARY KEY (bank_id)
+    PRIMARY KEY (bank_id),
+    CONSTRAINT chk_bank_hours CHECK (close_time > open_time)
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS HOSPITAL (
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS DONOR_PHONE (
     phone VARCHAR(25) NOT NULL,
     PRIMARY KEY (donor_id, phone),
     CONSTRAINT fk_donor_phone_donor FOREIGN KEY (donor_id)
-        REFERENCES DONOR (donor_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        REFERENCES DONOR (donor_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS BLOOD_BANK_PHONE (
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS BLOOD_BANK_PHONE (
     phone VARCHAR(25) NOT NULL,
     PRIMARY KEY (bank_id, phone),
     CONSTRAINT fk_blood_bank_phone_bank FOREIGN KEY (bank_id)
-        REFERENCES BLOOD_BANK (bank_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        REFERENCES BLOOD_BANK (bank_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS HOSPITAL_PHONE (
@@ -81,7 +82,7 @@ CREATE TABLE IF NOT EXISTS HOSPITAL_PHONE (
     phone VARCHAR(25) NOT NULL,
     PRIMARY KEY (hospital_id, phone),
     CONSTRAINT fk_hospital_phone_hospital FOREIGN KEY (hospital_id)
-        REFERENCES HOSPITAL (hospital_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        REFERENCES HOSPITAL (hospital_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS STAFF (
@@ -127,6 +128,8 @@ CREATE TABLE IF NOT EXISTS `REQUEST` (
     request_date DATE NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'Pending',
     PRIMARY KEY (request_id),
+    -- Supports the month-window searches on request_date (Q3 and Q10).
+    KEY ix_request_date (request_date),
     CONSTRAINT chk_request_blood_group CHECK (blood_group IN ('A', 'B', 'AB', 'O')),
     CONSTRAINT chk_request_rh_factor CHECK (rh_factor IN ('+', '-')),
     CONSTRAINT chk_request_component CHECK (component_type IN ('Whole Blood', 'Plasma', 'Platelets')),

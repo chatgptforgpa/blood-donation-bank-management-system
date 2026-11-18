@@ -19,12 +19,12 @@ public final class DonorService {
     }
 
     public String register(String name, String group, String rh, String address, LocalDate dob, List<String> phones) {
-        String fullName = Check.text(name, "Họ tên", 150);
-        String addr = Check.text(address, "Địa chỉ", 255);
-        Check.oneOf(group, "Nhóm máu", "A", "B", "AB", "O");
+        String fullName = Check.text(name, "Full name", 150);
+        String addr = Check.text(address, "Address", 255);
+        Check.oneOf(group, "Blood group", "A", "B", "AB", "O");
         Check.oneOf(rh, "Rh", "+", "-");
         if (dob == null || !dob.isBefore(Biz.today())) {
-            throw new AppException("Ngày sinh không hợp lệ.");
+            throw new AppException("Date of birth is not valid.");
         }
         List<String> phoneList = Check.phones(phones);
         String id = Ids.next("D");
@@ -39,22 +39,36 @@ public final class DonorService {
     }
 
     public void update(String donorId, String name, String address, LocalDate dob, List<String> phones) {
-        Check.text(donorId, "Mã donor", 20);
-        String fullName = Check.text(name, "Họ tên", 150);
-        String addr = Check.text(address, "Địa chỉ", 255);
+        Check.text(donorId, "Donor ID", 20);
+        String fullName = Check.text(name, "Full name", 150);
+        String addr = Check.text(address, "Address", 255);
         if (dob == null || !dob.isBefore(Biz.today())) {
-            throw new AppException("Ngày sinh không hợp lệ.");
+            throw new AppException("Date of birth is not valid.");
         }
         List<String> phoneList = Check.phones(phones);
         Sql.run(c -> {
             int changed = Sql.update(c, "UPDATE DONOR SET full_name = ?, address = ?, date_of_birth = ? WHERE donor_id = ?",
                     fullName, addr, dob, donorId);
             if (changed != 1) {
-                throw new AppException("Không tìm thấy donor " + donorId + ".");
+                throw new AppException("Donor not found: " + donorId + ".");
             }
             Sql.update(c, "DELETE FROM DONOR_PHONE WHERE donor_id = ?", donorId);
             for (String phone : phoneList) {
                 Sql.update(c, "INSERT INTO DONOR_PHONE (donor_id, phone) VALUES (?, ?)", donorId, phone);
+            }
+        });
+    }
+
+    /**
+     * Deletes a donor. Phone rows go with it (ON DELETE CASCADE); a donor with donation
+     * history is protected by fk_donation_donor (RESTRICT) and the error is explained by Errors.
+     */
+    public void delete(String donorId) {
+        Check.text(donorId, "Donor ID", 20);
+        Sql.run(c -> {
+            int changed = Sql.update(c, "DELETE FROM DONOR WHERE donor_id = ?", donorId);
+            if (changed != 1) {
+                throw new AppException("Donor not found: " + donorId + ".");
             }
         });
     }

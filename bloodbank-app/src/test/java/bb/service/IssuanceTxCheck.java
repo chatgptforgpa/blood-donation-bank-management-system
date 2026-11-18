@@ -189,7 +189,7 @@ public final class IssuanceTxCheck {
             service.issue("R1", "S1", List.of("U1", "U2"));
             expect(false, "over-issue must throw");
         } catch (AppException e) {
-            expect(e.getMessage().contains("còn thiếu 1"), "over-issuance rejected with remaining count");
+            expect(e.getMessage().contains("Only 1 unit"), "over-issuance rejected with remaining count");
         }
         expect(calls == 0 && LOG.contains("rollback"), "no procedure call when quantity exceeds remaining");
 
@@ -198,14 +198,14 @@ public final class IssuanceTxCheck {
             service.issue("R1", "S1", List.of("U1"));
             expect(false, "fulfilled must throw");
         } catch (AppException e) {
-            expect(e.getMessage().contains("cấp đủ"), "fulfilled request rejected");
+            expect(e.getMessage().contains("already fulfilled"), "fulfilled request rejected");
         }
 
         try {
             service.issue("R1", "S1", List.of("U1", "U1"));
             expect(false, "duplicate must throw");
         } catch (AppException e) {
-            expect(e.getMessage().contains("trùng"), "duplicate unit ids rejected before opening a transaction");
+            expect(e.getMessage().contains("duplicate"), "duplicate unit ids rejected before opening a transaction");
         }
         System.out.println("ALL PASS");
     }

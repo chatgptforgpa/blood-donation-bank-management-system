@@ -20,10 +20,10 @@ final class ReportPanel extends JPanel implements Reloadable {
         setLayout(new BorderLayout(6, 6));
         setBorder(Ui.pad());
         reports.setPreferredSize(new Dimension(520, reports.getPreferredSize().height));
-        JButton run = new JButton("Chạy báo cáo");
+        JButton run = new JButton("Run report");
         run.addActionListener(e -> reload());
         reports.addActionListener(e -> reload());
-        add(Ui.flow(new JLabel("Báo cáo:"), reports, run, count), BorderLayout.NORTH);
+        add(Ui.flow(new JLabel("Report:"), reports, run, count), BorderLayout.NORTH);
         add(Ui.scroll(table), BorderLayout.CENTER);
     }
 
@@ -33,14 +33,14 @@ final class ReportPanel extends JPanel implements Reloadable {
         if (name == null) {
             reportLoad.invalidate();
             Ui.clear(table);
-            count.setText("0 dòng");
+            count.setText("0 rows");
             return;
         }
         Ui.clear(table);
-        count.setText("Đang tải...");
+        count.setText("Loading...");
         Ui.latest(this, reportLoad, () -> service.run(name), rows -> {
             Ui.fill(table, rows);
-            count.setText(rows.size() + " dòng");
+            count.setText(rows.size() + " rows");
         });
     }
 }

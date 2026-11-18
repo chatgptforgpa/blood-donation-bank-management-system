@@ -227,6 +227,10 @@ def main():
     vietnam_time = timezone(timedelta(hours=7))
     parser.add_argument("--as-of", type=date.fromisoformat, default=datetime.now(vietnam_time).date(),
                         help="Snapshot date as YYYY-MM-DD. Defaults to today's date in Vietnam.")
+    parser.add_argument("--reference-date", type=date.fromisoformat, default=None,
+                        help="Day the report results were taken; rebuild.sql shifts every date by "
+                             "(day of the run - reference date). Defaults to --as-of. The current "
+                             "package uses --as-of 2026-11-14 --reference-date 2026-11-17.")
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name("seed_2000.sql"))
     args = parser.parse_args()
     rows = build_rows(args.as_of)
@@ -247,7 +251,10 @@ def main():
         f"DROP DATABASE IF EXISTS `{SCHEMA}`;",
         (source_directory / "setup.sql").read_text(encoding="utf-8-sig"),
         seed_sql,
+        (source_directory / "date_shift.sql").read_text(encoding="utf-8-sig")
+        .replace("2026-11-17", str(args.reference_date or args.as_of)),
         (source_directory / "business_rules.sql").read_text(encoding="utf-8-sig"),
+        (source_directory / "post_setup.sql").read_text(encoding="utf-8-sig"),
     ]
     rebuild_path.write_text("\n\n".join(rebuild_parts), encoding="utf-8")
     for table, table_rows in rows.items():

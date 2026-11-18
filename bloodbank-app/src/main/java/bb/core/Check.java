@@ -15,11 +15,11 @@ public final class Check {
 
     public static String text(String value, String field, int max) {
         if (value == null || value.isBlank()) {
-            throw new AppException(field + " không được để trống.");
+            throw new AppException(field + " is required.");
         }
         String trimmed = value.trim();
         if (trimmed.length() > max) {
-            throw new AppException(field + " tối đa " + max + " ký tự.");
+            throw new AppException(field + " must be at most " + max + " characters.");
         }
         return trimmed;
     }
@@ -30,22 +30,22 @@ public final class Check {
                 return value;
             }
         }
-        throw new AppException(field + " không hợp lệ: " + value);
+        throw new AppException(field + " is not valid: " + value);
     }
 
     public static LocalDate notFuture(LocalDate date, String field) {
         if (date == null) {
-            throw new AppException(field + " không được để trống.");
+            throw new AppException(field + " is required.");
         }
         if (date.isAfter(Biz.today())) {
-            throw new AppException(field + " không được sau ngày hiện tại.");
+            throw new AppException(field + " cannot be in the future.");
         }
         return date;
     }
 
     public static int positive(int value, String field) {
         if (value <= 0) {
-            throw new AppException(field + " phải lớn hơn 0.");
+            throw new AppException(field + " must be greater than 0.");
         }
         return value;
     }
@@ -59,10 +59,13 @@ public final class Check {
                 }
                 String trimmed = phone.trim();
                 if (!PHONE.matcher(trimmed).matches()) {
-                    throw new AppException("Số điện thoại không hợp lệ: " + trimmed);
+                    throw new AppException("Invalid phone number: " + trimmed);
                 }
                 unique.add(trimmed);
             }
+        }
+        if (unique.isEmpty()) {
+            throw new AppException("Enter at least one phone number.");
         }
         return new ArrayList<>(unique);
     }

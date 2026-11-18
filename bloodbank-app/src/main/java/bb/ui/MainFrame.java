@@ -14,11 +14,11 @@ final class MainFrame extends JFrame {
         JTabbedPane tabs = new JTabbedPane();
         List<Reloadable> panels = new ArrayList<>();
         add(tabs, "Donor", new DonorPanel(), panels);
-        add(tabs, "Hiến máu & sàng lọc", new DonationPanel(), panels);
-        add(tabs, "Kho máu", new InventoryPanel(), panels);
-        add(tabs, "Yêu cầu máu", new RequestPanel(), panels);
-        add(tabs, "Cấp máu", new IssuancePanel(), panels);
-        add(tabs, "Báo cáo", new ReportPanel(), panels);
+        add(tabs, "Donations & Screening", new DonationPanel(), panels);
+        add(tabs, "Inventory", new InventoryPanel(), panels);
+        add(tabs, "Requests", new RequestPanel(), panels);
+        add(tabs, "Issuance", new IssuancePanel(), panels);
+        add(tabs, "Reports", new ReportPanel(), panels);
         tabs.addChangeListener(e -> panels.get(tabs.getSelectedIndex()).reload());
         getContentPane().add(tabs, BorderLayout.CENTER);
         setMinimumSize(new Dimension(1000, 640));

@@ -103,19 +103,19 @@ class UiTest {
             table.set(Ui.table());
             panel.set(Ui.browse(table.get()));
         });
-        assertEquals("0 dòng", countLabel(panel.get()).getText());
+        assertEquals("0 rows", countLabel(panel.get()).getText());
         edt(() -> Ui.fill(table.get(), new Rows(List.of("id"),
                 List.of(new Object[]{"A"}, new Object[]{"B"}))));
         edt(() -> { });
-        assertEquals("2 dòng", countLabel(panel.get()).getText());
+        assertEquals("2 rows", countLabel(panel.get()).getText());
         edt(() -> Ui.fill(table.get(), new Rows(List.of("id"), List.of())));
         edt(() -> { });
-        assertEquals("0 dòng", countLabel(panel.get()).getText());
+        assertEquals("0 rows", countLabel(panel.get()).getText());
     }
 
     private static JLabel countLabel(Container parent) {
         for (Component c : parent.getComponents()) {
-            if (c instanceof JLabel label && label.getText().endsWith(" dòng")) {
+            if (c instanceof JLabel label && label.getText().endsWith(" rows")) {
                 return label;
             }
             if (c instanceof Container child) {

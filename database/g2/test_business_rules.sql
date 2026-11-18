@@ -233,3 +233,15 @@ DELIMITER ;
 
 CALL d309_smoke_test();
 DROP PROCEDURE d309_smoke_test;
+
+-- Integrity check (formerly Q11): units issued with a group, Rh or component that
+-- differs from the request. The issue trigger makes this impossible, so the expected
+-- result is always 0 rows.
+SELECT ir.issue_id, ir.request_id, u.bank_id, u.unit_id
+FROM ISSUE_RECORD AS ir
+JOIN BLOOD_UNIT AS u ON ir.bank_id = u.bank_id AND ir.unit_id = u.unit_id
+JOIN DONATION_EVENT AS e ON e.event_id = u.event_id
+JOIN DONOR AS d ON d.donor_id = e.donor_id
+JOIN `REQUEST` AS r ON r.request_id = ir.request_id
+WHERE d.blood_group <> r.blood_group OR d.rh_factor <> r.rh_factor
+   OR u.component_type <> r.component_type;

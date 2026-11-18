@@ -44,7 +44,7 @@ public final class Db {
 
     public static Connection open() throws SQLException {
         if (url == null) {
-            throw new SQLException("Chưa cấu hình kết nối database.");
+            throw new SQLException("Database connection is not configured.");
         }
         return DriverManager.getConnection(url, user, password);
     }

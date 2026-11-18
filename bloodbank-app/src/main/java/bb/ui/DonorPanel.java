@@ -27,22 +27,24 @@ final class DonorPanel extends JPanel implements Reloadable {
     DonorPanel() {
         setLayout(new BorderLayout(6, 6));
         setBorder(Ui.pad());
-        JButton find = new JButton("Tìm");
+        JButton find = new JButton("Search");
         find.addActionListener(e -> reload());
         search.addActionListener(e -> reload());
-        add(Ui.flow(new JLabel("Mã hoặc tên donor:"), search, find), BorderLayout.NORTH);
+        add(Ui.flow(new JLabel("Donor ID or name:"), search, find), BorderLayout.NORTH);
         add(Ui.browse(table), BorderLayout.CENTER);
 
-        JButton register = new JButton("Đăng ký donor mới");
-        JButton update = new JButton("Cập nhật dòng đã chọn");
-        JButton reset = new JButton("Làm mới form");
+        JButton register = new JButton("Register donor");
+        JButton update = new JButton("Update selected");
+        JButton delete = new JButton("Delete selected donor");
+        JButton reset = new JButton("Clear form");
         register.addActionListener(e -> register());
         update.addActionListener(e -> update());
+        delete.addActionListener(e -> delete());
         reset.addActionListener(e -> resetForm());
         JPanel south = Ui.stack(
-                Ui.form(3, "Họ tên", name, "Nhóm máu", group, "Rh", rh,
-                        "Ngày sinh (yyyy-MM-dd)", dob, "Địa chỉ", address, "SĐT (cách nhau bởi dấu phẩy)", phones),
-                Ui.flow(register, update, reset, new JLabel("Nhóm máu và Rh không thể sửa sau khi đăng ký (BR37).")));
+                Ui.form(3, "Full name", name, "Blood group", group, "Rh", rh,
+                        "Date of birth (yyyy-MM-dd)", dob, "Address", address, "Phones (comma separated)", phones),
+                Ui.flow(register, update, delete, reset, new JLabel("Blood group and Rh cannot be changed after registration.")));
         add(south, BorderLayout.SOUTH);
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -95,32 +97,52 @@ final class DonorPanel extends JPanel implements Reloadable {
             String g = (String) group.getSelectedItem();
             String r = (String) rh.getSelectedItem();
             String a = address.getText();
-            LocalDate d = Ui.date(dob, "Ngày sinh");
+            LocalDate d = Ui.date(dob, "Date of birth");
             List<String> p = phoneList();
             Ui.async(this, () -> service.register(n, g, r, a, d, p), id -> {
-                Ui.info(this, "Đã đăng ký donor " + id + ".");
+                Ui.info(this, "Registered donor " + id + ".");
                 search.setText(id);
                 reload();
             });
         });
     }
 
+    private void delete() {
+        String id = Ui.selected(table, "donor_id");
+        if (id == null) {
+            Ui.info(this, "Select a donor in the table first.");
+            return;
+        }
+        String who = Ui.selected(table, "full_name");
+        if (!Ui.confirm(this, "Delete donor " + id + " (" + who + ")?\nThe donor's phone numbers are deleted too. This cannot be undone.")) {
+            return;
+        }
+        Ui.async(this, () -> {
+            service.delete(id);
+            return id;
+        }, done -> {
+            Ui.info(this, "Deleted donor " + done + ".");
+            resetForm();
+            reload();
+        });
+    }
+
     private void update() {
         String id = Ui.selected(table, "donor_id");
         if (id == null) {
-            Ui.info(this, "Chọn một donor trong bảng trước.");
+            Ui.info(this, "Select a donor in the table first.");
             return;
         }
         Ui.guard(this, () -> {
             String n = name.getText();
             String a = address.getText();
-            LocalDate d = Ui.date(dob, "Ngày sinh");
+            LocalDate d = Ui.date(dob, "Date of birth");
             List<String> p = phoneList();
             Ui.async(this, () -> {
                 service.update(id, n, a, d, p);
                 return id;
             }, done -> {
-                Ui.info(this, "Đã cập nhật donor " + done + ".");
+                Ui.info(this, "Updated donor " + done + ".");
                 reload();
             });
         });

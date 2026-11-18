@@ -39,7 +39,10 @@ JAR đầy đủ sau build là `target/bloodbank-app.jar`. `build-and-test.cmd` 
 
 ## Các phần đã sửa
 
-- Tab Báo cáo có đủ Q1–Q12 theo Query Matrix (Q6 cố định AB+ Platelets, Q7 có manager) và báo cáo tồn kho.
+- 17/11/2026: tab Donor có nút xóa (hỏi xác nhận; donor đã hiến máu bị FK chặn và app báo lý do bằng câu dễ hiểu). Tab Requests có sửa mức khẩn cấp/số lượng và xóa yêu cầu. Q11 đổi sang `EXCEPT`, Q12 đọc từ view `v_request_outstanding`. `Errors` giải thích vi phạm theo tên constraint.
+
+- 17/11/2026 (2): toàn bộ giao diện và thông báo lỗi chuyển sang tiếng Anh (tab Donor, Donations & Screening, Inventory, Requests, Issuance, Reports); tên báo cáo dạng `Q1. ...`, không dùng dấu gạch dài.
+- Tab Reports có đủ Q1 đến Q12 theo Query Matrix (Q6 cố định AB+ Platelets, Q7 có manager) và báo cáo tồn kho.
 - Reset donor xóa dữ liệu và selection; browse có số dòng; kết quả đọc cũ không đè lên filter/selection mới.
 - Nhập kho nhận expiry do người dùng nhập, bắt buộc sau collection. Collection không ở tương lai; expiry ở tương lai được phép. Không áp cứng 35/365/5 ngày từ generator.
 - Maven tự chạy test và tạo JAR có dependency, kèm file mở app.

@@ -1,5 +1,6 @@
 -- Group 02 | Complete rebuild for the sample database.
 -- Snapshot date: 2026-11-14.
+-- Engine: MySQL 8.0.46+ (tested on MySQL Community Server 26.10.0).
 -- This script deletes and recreates only blood_bank_group2_d3.
 DROP DATABASE IF EXISTS `blood_bank_group2_d3`;
 
@@ -7,6 +8,8 @@ DROP DATABASE IF EXISTS `blood_bank_group2_d3`;
 -- Run this file on a clean schema for the first installation.
 -- Reruns retain existing tables and their data.
 -- DONOR.address is NOT NULL as specified in the current D3-05 draft.
+-- Referential actions: phone tables (multivalued attributes) CASCADE with their owner;
+-- every other FK is RESTRICT so history (donations, units, issues) can never be lost silently.
 
 CREATE DATABASE IF NOT EXISTS blood_bank_group2_d3
     DEFAULT CHARACTER SET utf8mb4
@@ -32,7 +35,8 @@ CREATE TABLE IF NOT EXISTS BLOOD_BANK (
     location VARCHAR(255) NOT NULL,
     open_time TIME NOT NULL,
     close_time TIME NOT NULL,
-    PRIMARY KEY (bank_id)
+    PRIMARY KEY (bank_id),
+    CONSTRAINT chk_bank_hours CHECK (close_time > open_time)
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS HOSPITAL (
@@ -47,7 +51,7 @@ CREATE TABLE IF NOT EXISTS DONOR_PHONE (
     phone VARCHAR(25) NOT NULL,
     PRIMARY KEY (donor_id, phone),
     CONSTRAINT fk_donor_phone_donor FOREIGN KEY (donor_id)
-        REFERENCES DONOR (donor_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        REFERENCES DONOR (donor_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS BLOOD_BANK_PHONE (
@@ -55,7 +59,7 @@ CREATE TABLE IF NOT EXISTS BLOOD_BANK_PHONE (
     phone VARCHAR(25) NOT NULL,
     PRIMARY KEY (bank_id, phone),
     CONSTRAINT fk_blood_bank_phone_bank FOREIGN KEY (bank_id)
-        REFERENCES BLOOD_BANK (bank_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        REFERENCES BLOOD_BANK (bank_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS HOSPITAL_PHONE (
@@ -63,7 +67,7 @@ CREATE TABLE IF NOT EXISTS HOSPITAL_PHONE (
     phone VARCHAR(25) NOT NULL,
     PRIMARY KEY (hospital_id, phone),
     CONSTRAINT fk_hospital_phone_hospital FOREIGN KEY (hospital_id)
-        REFERENCES HOSPITAL (hospital_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        REFERENCES HOSPITAL (hospital_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS STAFF (
@@ -109,6 +113,8 @@ CREATE TABLE IF NOT EXISTS `REQUEST` (
     request_date DATE NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'Pending',
     PRIMARY KEY (request_id),
+    -- Supports the month-window searches on request_date (Q3 and Q10).
+    KEY ix_request_date (request_date),
     CONSTRAINT chk_request_blood_group CHECK (blood_group IN ('A', 'B', 'AB', 'O')),
     CONSTRAINT chk_request_rh_factor CHECK (rh_factor IN ('+', '-')),
     CONSTRAINT chk_request_component CHECK (component_type IN ('Whole Blood', 'Plasma', 'Platelets')),
@@ -2298,6 +2304,27 @@ UNION ALL
 SELECT 'TOTAL', SUM(sample_rows) FROM sample_counts;
 
 
+-- Group 02 | Date shift, run in rebuild.sql after the seed and before the business rules.
+-- The sample data is a snapshot whose reference day is 2026-11-17, the day the results in the
+-- report were taken. The queries compare dates with CURRENT_DATE, so a fixed snapshot would drift
+-- on a later day: units would expire and "last month" would move, and some queries would return
+-- nothing. This step moves every date column by the number of days between the reference day and
+-- the day the script runs. The sample is then always "as of today" and the queries keep their rows.
+-- MySQL specific: DATEDIFF and a user variable.
+
+USE blood_bank_group2_d3;
+
+SET @shift_days = DATEDIFF(CURRENT_DATE, DATE '2026-11-17');
+
+UPDATE DONOR          SET date_of_birth   = date_of_birth   + INTERVAL @shift_days DAY;
+UPDATE DONATION_EVENT SET donation_date   = donation_date   + INTERVAL @shift_days DAY;
+UPDATE SCREENING_TEST SET test_date       = test_date       + INTERVAL @shift_days DAY;
+UPDATE BLOOD_UNIT     SET collection_date = collection_date + INTERVAL @shift_days DAY,
+                          expiry_date     = expiry_date     + INTERVAL @shift_days DAY;
+UPDATE `REQUEST`      SET request_date    = request_date    + INTERVAL @shift_days DAY;
+UPDATE ISSUE_RECORD   SET issue_date      = issue_date      + INTERVAL @shift_days DAY;
+
+
 -- Group 02 | D3-09 | Business rules for MySQL 8.0.46
 -- Fresh setup order: setup.sql, seed_2000.sql, business_rules.sql.
 -- Run installation while application writes are paused. This file can be re-run.
@@ -2718,3 +2745,30 @@ SELECT 'D3-09 installed' AS result,
        (SELECT COUNT(*) FROM information_schema.triggers
         WHERE trigger_schema = DATABASE() AND LEFT(trigger_name, 5) = 'd309_') AS rule_triggers,
        @@global.event_scheduler AS event_scheduler;
+
+
+-- Group 02 | Post-setup steps, run last in rebuild.sql.
+-- 1) The view used by Q12 and by the application, so it exists right after a rebuild.
+-- 2) Expire any Available unit whose expiry date has already passed. The seed is a
+--    snapshot of a fixed date; when the script is run on a later day this brings the
+--    derived BLOOD_UNIT.status up to date through the same procedure the daily event uses.
+
+USE blood_bank_group2_d3;
+
+CREATE OR REPLACE VIEW v_request_outstanding AS
+SELECT r.request_id, r.blood_group, r.rh_factor,
+       r.component_type, r.quantity_needed,
+       COUNT(ir.issue_id) AS quantity_filled,
+       r.quantity_needed - COUNT(ir.issue_id) AS outstanding_units
+FROM REQUEST AS r
+LEFT JOIN ISSUE_RECORD AS ir ON ir.request_id = r.request_id
+GROUP BY r.request_id, r.blood_group, r.rh_factor,
+         r.component_type, r.quantity_needed;
+
+CALL d309_expire_units();
+
+SELECT 'Rebuild finished' AS result,
+       (SELECT COUNT(*) FROM information_schema.tables
+        WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') AS base_tables,
+       (SELECT COUNT(*) FROM information_schema.views
+        WHERE table_schema = DATABASE()) AS views;

@@ -14,8 +14,8 @@ import java.util.Set;
 
 public final class IssuanceService {
     public Rows candidateUnits(String requestId, String staffId) {
-        Check.text(requestId, "Yêu cầu", 20);
-        Check.text(staffId, "Nhân viên", 20);
+        Check.text(requestId, "Request", 20);
+        Check.text(staffId, "Staff", 20);
         return Sql.query("SELECT u.bank_id, u.unit_id, d.blood_group, d.rh_factor, u.component_type, u.collection_date, u.expiry_date "
                 + "FROM REQUEST r JOIN STAFF s ON s.staff_id = ? JOIN BLOOD_UNIT u ON u.bank_id = s.bank_id "
                 + "JOIN DONATION_EVENT e ON e.event_id = u.event_id JOIN DONOR d ON d.donor_id = e.donor_id "
@@ -25,32 +25,32 @@ public final class IssuanceService {
     }
 
     public List<String> issue(String requestId, String staffId, List<String> unitIds) {
-        Check.text(requestId, "Yêu cầu", 20);
-        Check.text(staffId, "Nhân viên", 20);
+        Check.text(requestId, "Request", 20);
+        Check.text(staffId, "Staff", 20);
         if (unitIds == null || unitIds.isEmpty()) {
-            throw new AppException("Chưa chọn đơn vị máu để cấp.");
+            throw new AppException("No blood unit was selected for issue.");
         }
         Set<String> distinct = new HashSet<>(unitIds);
         if (distinct.size() != unitIds.size()) {
-            throw new AppException("Danh sách đơn vị máu có mã trùng.");
+            throw new AppException("The unit list contains duplicate IDs.");
         }
         return Sql.tx(c -> {
             Rows request = Sql.select(c, "SELECT quantity_needed FROM REQUEST WHERE request_id = ? FOR UPDATE", requestId);
             if (request.size() == 0) {
-                throw new AppException("Không tìm thấy yêu cầu " + requestId + ".");
+                throw new AppException("Request not found: " + requestId + ".");
             }
             long needed = request.num(0, "quantity_needed");
             long issued = Sql.select(c, "SELECT COUNT(*) AS n FROM ISSUE_RECORD WHERE request_id = ?", requestId).num(0, "n");
             long remaining = needed - issued;
             if (remaining <= 0) {
-                throw new AppException("Yêu cầu đã được cấp đủ.");
+                throw new AppException("The request is already fulfilled.");
             }
             if (unitIds.size() > remaining) {
-                throw new AppException("Chỉ còn thiếu " + remaining + " đơn vị, không thể cấp " + unitIds.size() + ".");
+                throw new AppException("Only " + remaining + " unit(s) still needed, cannot issue " + unitIds.size() + ".");
             }
             Rows staff = Sql.select(c, "SELECT bank_id FROM STAFF WHERE staff_id = ?", staffId);
             if (staff.size() == 0) {
-                throw new AppException("Không tìm thấy nhân viên " + staffId + ".");
+                throw new AppException("Staff member not found: " + staffId + ".");
             }
             String bankId = staff.str(0, "bank_id");
             List<String> issueIds = new ArrayList<>();

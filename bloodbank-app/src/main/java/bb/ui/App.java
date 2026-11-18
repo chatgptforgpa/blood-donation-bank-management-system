@@ -40,7 +40,7 @@ public final class App {
             Db.ping();
             return true;
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Không kết nối được database: " + e.getMessage(), "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Cannot connect to the database: " + e.getMessage(), "Connection error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
@@ -49,8 +49,8 @@ public final class App {
         JTextField url = new JTextField(DEFAULT_URL, 48);
         JTextField user = new JTextField(20);
         JPasswordField password = new JPasswordField(20);
-        JPanel form = Ui.form(1, "JDBC URL", url, "Tài khoản", user, "Mật khẩu", password);
-        int choice = JOptionPane.showConfirmDialog(null, form, "Kết nối MySQL", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        JPanel form = Ui.form(1, "JDBC URL", url, "User", user, "Password", password);
+        int choice = JOptionPane.showConfirmDialog(null, form, "Connect to MySQL", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (choice != JOptionPane.OK_OPTION) {
             return false;
         }
