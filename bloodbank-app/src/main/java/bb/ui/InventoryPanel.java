@@ -36,23 +36,23 @@ final class InventoryPanel extends JPanel implements Reloadable {
     InventoryPanel() {
         setLayout(new BorderLayout(6, 6));
         setBorder(Ui.pad());
-        JButton search = new JButton("Tìm");
+        JButton search = new JButton("Search");
         search.addActionListener(e -> search());
-        add(Ui.flow(new JLabel("Ngân hàng"), filterBank, new JLabel("Trạng thái"), filterStatus, new JLabel("Nhóm"), filterGroup,
-                new JLabel("Rh"), filterRh, new JLabel("Thành phần"), filterComponent, search), BorderLayout.NORTH);
+        add(Ui.flow(new JLabel("Bank"), filterBank, new JLabel("Status"), filterStatus, new JLabel("Group"), filterGroup,
+                new JLabel("Rh"), filterRh, new JLabel("Component"), filterComponent, search), BorderLayout.NORTH);
         add(Ui.browse(table), BorderLayout.CENTER);
 
-        JButton register = new JButton("Nhập kho đơn vị máu");
-        JButton discard = new JButton("Hủy bỏ đơn vị đã chọn");
-        JButton expire = new JButton("Cập nhật đơn vị hết hạn");
+        JButton register = new JButton("Register unit");
+        JButton discard = new JButton("Discard selected unit");
+        JButton expire = new JButton("Mark expired units");
         register.addActionListener(e -> register());
         discard.addActionListener(e -> discard());
         expire.addActionListener(e -> expire());
         JPanel south = Ui.stack(
-                Ui.form(2, "Đợt hiến đã Passed", eventBox, "Ngân hàng lưu trữ", storeBank, "Thành phần", component,
-                        "Ngày thu thập (yyyy-MM-dd)", collection, "Ngày hết hạn (yyyy-MM-dd)", expiry),
-                Ui.stack(Ui.flow(register, new JLabel("Nhập ngày hết hạn của đơn vị máu; ngày hết hạn phải sau ngày thu thập.")),
-                        Ui.flow(new JLabel("Nhân viên thực hiện hủy"), staff, discard, expire)));
+                Ui.form(2, "Passed donation event", eventBox, "Storage bank", storeBank, "Component", component,
+                        "Collection date (yyyy-MM-dd)", collection, "Expiry date (yyyy-MM-dd)", expiry),
+                Ui.stack(Ui.flow(register, new JLabel("Expiry date must be after the collection date.")),
+                        Ui.flow(new JLabel("Discarding staff"), staff, discard, expire)));
         add(south, BorderLayout.SOUTH);
     }
 
@@ -81,10 +81,10 @@ final class InventoryPanel extends JPanel implements Reloadable {
             String bank = Ui.id(storeBank);
             String event = Ui.id(eventBox);
             String comp = (String) component.getSelectedItem();
-            LocalDate date = Ui.date(collection, "Ngày thu thập");
-            LocalDate expiryDate = Ui.date(expiry, "Ngày hết hạn");
+            LocalDate date = Ui.date(collection, "Collection date");
+            LocalDate expiryDate = Ui.date(expiry, "Expiry date");
             Ui.async(this, () -> service.register(bank, event, comp, date, expiryDate), id -> {
-                Ui.info(this, "Đã nhập kho đơn vị " + id + " (Available).");
+                Ui.info(this, "Registered unit " + id + " (Available).");
                 search();
             });
         });
@@ -95,24 +95,24 @@ final class InventoryPanel extends JPanel implements Reloadable {
         String unit = Ui.selected(table, "unit_id");
         String staffId = Ui.id(staff);
         if (bank == null || unit == null) {
-            Ui.info(this, "Chọn một đơn vị máu trong bảng.");
+            Ui.info(this, "Select a blood unit in the table.");
             return;
         }
-        if (!Ui.confirm(this, "Hủy bỏ đơn vị " + unit + " tại " + bank + "? Thao tác này không hoàn tác được.")) {
+        if (!Ui.confirm(this, "Discard unit " + unit + " at " + bank + "? This cannot be undone.")) {
             return;
         }
         Ui.async(this, () -> {
             service.discard(bank, unit, staffId);
             return unit;
         }, done -> {
-            Ui.info(this, "Đã hủy bỏ đơn vị " + done + ".");
+            Ui.info(this, "Discarded unit " + done + ".");
             search();
         });
     }
 
     private void expire() {
         Ui.async(this, service::expireNow, count -> {
-            Ui.info(this, "Đã chuyển " + count + " đơn vị quá hạn sang Expired.");
+            Ui.info(this, "Marked " + count + " overdue unit(s) as Expired.");
             search();
         });
     }

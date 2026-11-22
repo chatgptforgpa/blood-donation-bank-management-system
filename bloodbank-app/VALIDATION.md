@@ -1,35 +1,35 @@
-# Kết quả kiểm tra ngày 16/11/2026
+# Test results of 16/11/2026
 
-Nguồn: `bloodbank-app-fixed-20261115.zip`. Gói ngày 16/11 bổ sung JAR đã build và cập nhật tài liệu; giữ nguyên source Java, POM và các file chạy của bản 15/11. Baseline DB vẫn là 12 bảng.
+Source: `bloodbank-app-fixed-20261115.zip`. The 16/11 package adds the built JAR and updates the documents; the Java source, POM and run files of the 15/11 version are unchanged. The database baseline is still 12 tables.
 
-Bản source trên GitHub giữ nguyên source đã kiểm tra. JAR của gói đã build được tạo lại bằng `build-and-test.cmd` khi tải source; JAR và cấu hình tài khoản cục bộ được loại khỏi Git.
+The source on GitHub is the tested source. The JAR of the built package is recreated with `build-and-test.cmd` after downloading the source; the JAR and local account settings are excluded from Git.
 
-## Build và JUnit
+## Build and JUnit
 
-- Maven 3.9.9, JDK 25.0.2, biên dịch release Java 17.
+- Maven 3.9.9, JDK 25.0.2, compiled with release Java 17.
 - `mvn verify`: BUILD SUCCESS.
-- **13 JUnit test PASS, 0 failure, 0 error, 0 skipped**: bảy biên ngày inventory, một test chạy chín assertion transaction có sẵn, bốn test tải dữ liệu/count và một test reset donor.
-- Test transaction dùng fake JDBC; các test UI chạy headless. Chúng tự chạy trong Maven, không cần MySQL.
-- `app.jar` được sao chép từ `target/bloodbank-app.jar` đã build thành công. JAR có MySQL Connector/J 8.4.0 và dependency cần thiết, khai báo Main-Class `bb.ui.App` và JDBC driver service.
-- Toàn bộ 31 class của app trong JAR khớp byte với kết quả build, class version Java 17. Không chứa tài khoản database.
+- **13 JUnit tests PASS, 0 failures, 0 errors, 0 skipped**: seven inventory date limits, one test that runs the nine existing transaction assertions, four data load/count tests and one donor reset test.
+- The transaction test uses a fake JDBC layer; the UI tests run headless. They run inside Maven and do not need MySQL.
+- `app.jar` is copied from the successfully built `target/bloodbank-app.jar`. The JAR contains MySQL Connector/J 8.4.0 and the needed dependencies, declares Main-Class `bb.ui.App` and the JDBC driver service.
+- All 31 application classes in the JAR match the build output byte for byte, with Java 17 class version. No database account is included.
 
-## MySQL thật
+## Real MySQL
 
-MySQL 8.0.46 thử nghiệm riêng, seed ngày 14/11/2026, ngày chạy 16/11/2026. Đã chạy **37 kiểm tra tích hợp**, tất cả PASS, gồm:
+Separate MySQL 8.0.46 test server, seed of 14/11/2026, run on 16/11/2026. **37 integration checks** were run and all PASS, including:
 
-- Browse 250 donor, 200 donation event, 180 unit và 85 request.
-- Q1–Q12 được so sánh toàn bộ dòng kết quả theo các cột của SQL đã duyệt; bỏ qua thứ tự trả dòng và giữ nguyên số lần xuất hiện của từng dòng. Kết quả khớp, không chỉ khớp số dòng. Q8 và Q9 có thêm cột hiển thị trong app; phép đối chiếu dùng các cột của SQL chuẩn.
-- Q7 có mã và tên manager, công thức wastage giữ đúng số đếm.
-- Đăng ký/sửa donor có phone; tên có dấu nháy đơn được xử lý bằng tham số.
-- Donor mới được hiến lần đầu; khoảng cách 56 ngày vẫn được DB chặn.
-- Chặn nhập unit trước khi event Passed; đủ năm Negative cho event Passed.
-- Expiry nhập tùy chọn hai ngày sau collection được lưu đúng nguyên giá trị; expiry bằng collection hoặc để trống bị từ chối.
-- Batch có unit thứ hai sai component: không để lại issue hoặc trạng thái cập nhật dở.
-- Batch hợp lệ commit đủ unit và trạng thái request; request đã Fulfilled không được cấp thêm.
-- Hai lần cấp cùng một unit, hoặc cùng lấy slot cuối của request: chính xác một bên commit.
-- Discard qua procedure tiếp tục hoạt động.
+- Browsing 250 donors, 200 donation events, 180 units and 85 requests.
+- Q1 to Q12 compared on every result row using the columns of the approved SQL; row order is ignored and the number of times each row appears is kept. The results match, not only the row counts. Q8 and Q9 have extra display columns in the app; the comparison uses the columns of the reference SQL.
+- Q7 shows the manager ID and name; the wastage formula keeps the correct counts.
+- Registering/editing a donor with phones; a name with a single quote is handled by parameters.
+- A new donor can donate for the first time; the 56 day gap is still blocked by the database.
+- A unit cannot be entered before the event is Passed; five Negative results make the event Passed.
+- An optional expiry two days after collection is stored exactly; an expiry equal to collection or left empty is rejected.
+- A batch whose second unit has the wrong component leaves no issue record and no half updated status.
+- A valid batch commits all units and the request status; a Fulfilled request cannot be issued more.
+- Two issuances of the same unit, or taking the last slot of a request: exactly one commits.
+- Discarding through the procedure still works.
 
-| Report | Số dòng khi chạy ngày 16/11 trên seed 14/11 |
+| Report | Rows when run on 16/11 with the 14/11 seed |
 |---|---:|
 | Q1 | 4 |
 | Q2 | 10 |
@@ -43,17 +43,17 @@ MySQL 8.0.46 thử nghiệm riêng, seed ngày 14/11/2026, ngày chạy 16/11/20
 | Q10 | 25 |
 | Q11 | 0 |
 | Q12 | 24 |
-| Tồn kho khả dụng | 97 |
+| Usable stock | 97 |
 
-Số dòng có thể thay đổi khi ngày tham chiếu hoặc dữ liệu thay đổi. Các report được so sánh trước khi thêm bản ghi dùng để kiểm tra chức năng.
+Row counts can change when the reference date or the data changes. The reports were compared before adding the records used to test the functions.
 
-Q6 dùng phạm vi AB+ Platelets của câu hỏi đã chốt. Q11 là truy vấn tìm trường hợp cấp sai nhóm máu, Rh hoặc thành phần; 0 dòng là kết quả phù hợp khi dữ liệu không có vi phạm.
+Q6 uses the AB+ Platelets scope of the agreed question. Q11 (at that time) looked for issues with the wrong blood group, Rh or component; 0 rows is the right result when the data has no violation.
 
-## Phạm vi kiểm tra giao diện và đóng gói
+## Scope of the interface and packaging checks
 
-- Các test UI chạy headless: reset donor, số dòng browse, bỏ kết quả hoặc lỗi của yêu cầu đọc đã cũ. Test dùng latch để điều khiển thứ tự hoàn thành.
-- Đợt kiểm tra ngày 16/11 không chạy lại toàn bộ giao diện bằng tay. Các file UI production giống bản 14/11 đã được kiểm tra trực quan trước đó.
-- Gói mới có `app.jar`, `run-app.cmd`, `build-and-test.cmd`, source và `db.properties.sample`. Để mở app cần Java 17 trở lên và cấu hình kết nối MySQL của nhóm; không cần Maven để chạy JAR đã kèm.
-- Maven chỉ tự chạy 13 JUnit test. 37 kiểm tra MySQL được thực hiện bằng harness riêng trên database thử nghiệm, không nằm trong lệnh `mvn verify` mặc định.
+- The UI tests run headless: donor reset, browse row counts, dropping results or errors of stale read requests. The tests use a latch to control the completion order.
+- The 16/11 check did not rerun the whole interface by hand. The production UI files are the same as the 14/11 version, which was checked visually before.
+- The new package has `app.jar`, `run-app.cmd`, `build-and-test.cmd`, the source and `db.properties.sample`. Opening the app needs Java 17 or later and the team's MySQL connection settings; running the included JAR does not need Maven.
+- Maven only runs the 13 JUnit tests. The 37 MySQL checks are done with a separate harness on a test database and are not part of the default `mvn verify`.
 
-Các kiểm tra tích hợp được thực hiện trên DB thử riêng; không xóa hoặc sửa DB người dùng đang sử dụng. Gói giao không chứa cấu hình tài khoản của môi trường kiểm tra.
+The integration checks were run on a separate test database; no database in use was dropped or changed. The delivered package contains no account settings of the test environment.

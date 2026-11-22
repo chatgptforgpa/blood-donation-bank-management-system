@@ -1,15 +1,15 @@
-# Kiểm tra gói ngày 14/11/2026
+# Check of the 14/11/2026 package
 
-Ngày tham chiếu truy vấn: 14/11/2026. Seed đi kèm: 14/11/2026.
+Query reference date: 14/11/2026. Seed included: 14/11/2026.
 
-Đã chạy trên MySQL 8.0.46, trong database kiểm tra riêng. Các số dòng mong đợi dưới đây được đối chiếu với các tình huống trong fixture; đây là bằng chứng kiểm tra gói, không thay thế phần giải thích từng query trong final report.
+Run on MySQL 8.0.46, in a separate test database. The expected row counts below were checked against the scenarios in the fixture; this is evidence that the package works and does not replace the explanation of each query in the final report.
 
-- Dựng lại bằng `rebuild.sql` hai lần liên tiếp: PASS. Mỗi lần có 12 bảng và 2.000 dòng.
-- Sáu kiểm tra nghiệp vụ trong `test_business_rules.sql`: PASS.
-- Critical: 22 request, gồm 7 chưa có issue và 15 đã có issue.
-- VIEW Q12: tổng outstanding là 100, khớp tổng requested trừ tổng issue.
+- Rebuilt with `rebuild.sql` twice in a row: PASS. Each time there are 12 tables and 2,000 rows.
+- The six business checks in `test_business_rules.sql`: PASS.
+- Critical: 22 requests, 7 without an issue record and 15 with one.
+- VIEW Q12: total outstanding is 100, equal to total requested minus total issued.
 
-| Query | Expected rows | Actual rows | Kết quả |
+| Query | Expected rows | Actual rows | Result |
 |---|---:|---:|---|
 | Q1 | 4 | 4 | PASS |
 | Q2 | 10 | 10 | PASS |
@@ -24,17 +24,17 @@ Ngày tham chiếu truy vấn: 14/11/2026. Seed đi kèm: 14/11/2026.
 | Q11 | 0 | 0 | PASS |
 | Q12 | 24 | 24 | PASS |
 
-Q11 là audit compatibility. Không có vi phạm trên seed hợp lệ nên kết quả 0 dòng là đúng.
+Q11 (at that time) was a compatibility audit. A valid seed has no violation, so 0 rows is correct.
 
-RA và tree chọn Q1, Q2, Q3, Q8. Kết quả tương ứng: 4, 10, 25 và 7 dòng. Các ảnh tree có số dòng phải dùng cùng ngày và dataset với lần chạy SQL.
+The RA expressions and trees cover Q1, Q2, Q3 and Q8, with 4, 10, 25 and 7 rows. Tree images that show row counts must use the same date and dataset as the SQL run.
 
-Generator giữ nguyên phiên bản đã sửa trước đó: chạy lại sẽ sinh `seed_2000.sql` và `rebuild.sql`. Các file RA và ảnh tree là snapshot, cần cập nhật riêng khi thay ngày hoặc dữ liệu.
+The generator is the previously fixed version: running it again creates `seed_2000.sql` and `rebuild.sql`. The RA files and tree images are a snapshot and must be updated separately when the date or the data changes.
 
-## Kiểm tra bản sửa cú pháp trigger
+## Check of the trigger syntax fix
 
-- Đã dựng gói sửa trên MySQL 8.0.46.
-- `fix_staff_triggers.sql` chạy hai lần liên tiếp: PASS; chỉ thay hai trigger kiểm tra STAFF tự quản lý.
-- Checksum dữ liệu cả 12 bảng trước/sau chạy file vá không đổi.
-- INSERT hoặc UPDATE để staff tự quản lý đều bị chặn đúng bằng SQLSTATE 45000.
-- Sáu kiểm tra nghiệp vụ tiếp tục PASS; Q8 có 7 dòng và Q9 có 15 dòng.
-- Seed, generator, SQL query và RA giữ nguyên so với gói ngày 14/11; sửa cú pháp tạo trigger trong setup và rebuild.
+- The fixed package was built on MySQL 8.0.46.
+- `fix_staff_triggers.sql` run twice in a row: PASS; it only replaces the two triggers that check that staff do not manage themselves.
+- The data checksum of all 12 tables is the same before and after running the patch.
+- An INSERT or UPDATE that makes a staff member their own manager is blocked with SQLSTATE 45000.
+- The six business checks still PASS; Q8 has 7 rows and Q9 has 15 rows.
+- Seed, generator, SQL queries and RA are unchanged from the 14/11 package; only the trigger creation syntax in setup and rebuild was fixed.

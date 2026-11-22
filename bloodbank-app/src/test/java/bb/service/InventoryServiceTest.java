@@ -13,7 +13,7 @@ class InventoryServiceTest {
     void collectionDateIsRequired() {
         AppException error = assertThrows(AppException.class,
                 () -> InventoryService.validateDates(null, Biz.today().plusDays(2)));
-        assertTrue(error.getMessage().contains("Ngày thu thập"));
+        assertTrue(error.getMessage().contains("Collection date"));
     }
 
     @Test
@@ -21,14 +21,14 @@ class InventoryServiceTest {
         LocalDate tomorrow = Biz.today().plusDays(1);
         AppException error = assertThrows(AppException.class,
                 () -> InventoryService.validateDates(tomorrow, tomorrow.plusDays(2)));
-        assertTrue(error.getMessage().contains("không được sau ngày hiện tại"));
+        assertTrue(error.getMessage().contains("cannot be in the future"));
     }
 
     @Test
     void expiryDateIsRequired() {
         AppException error = assertThrows(AppException.class,
                 () -> InventoryService.validateDates(Biz.today(), null));
-        assertTrue(error.getMessage().contains("Ngày hết hạn"));
+        assertTrue(error.getMessage().contains("Expiry date"));
     }
 
     @Test
@@ -36,7 +36,7 @@ class InventoryServiceTest {
         LocalDate date = Biz.today();
         AppException error = assertThrows(AppException.class,
                 () -> InventoryService.validateDates(date, date));
-        assertTrue(error.getMessage().contains("phải sau ngày thu thập"));
+        assertTrue(error.getMessage().contains("after the collection date"));
     }
 
     @Test
@@ -44,7 +44,7 @@ class InventoryServiceTest {
         LocalDate date = Biz.today();
         AppException error = assertThrows(AppException.class,
                 () -> InventoryService.validateDates(date, date.minusDays(1)));
-        assertTrue(error.getMessage().contains("phải sau ngày thu thập"));
+        assertTrue(error.getMessage().contains("after the collection date"));
     }
 
     @Test

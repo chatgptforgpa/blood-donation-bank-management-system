@@ -13,7 +13,7 @@ public final class ReportService {
     private static final Map<String, String> REPORTS = new LinkedHashMap<>();
 
     static {
-        add("Q1 — Đơn vị O− sắp hết hạn trong 7 ngày", """
+        add("Q1. Group O negative units expiring within 7 days", """
                 SELECT u.unit_id, u.bank_id, d.blood_group, d.rh_factor,
                        u.component_type, u.expiry_date, u.collection_date, u.status
                 FROM BLOOD_UNIT u
@@ -24,7 +24,7 @@ public final class ReportService {
                   AND u.expiry_date BETWEEN $TODAY AND DATE_ADD($TODAY, INTERVAL 7 DAY)
                 ORDER BY u.expiry_date, u.bank_id, u.unit_id
                 """);
-        add("Q2 — Donor đủ điều kiện hiến lại hôm nay", """
+        add("Q2. Donors eligible to donate again today", """
                 SELECT d.donor_id, d.full_name, d.blood_group, d.rh_factor,
                        MAX(e.donation_date) AS last_donation_date
                 FROM DONOR d
@@ -38,7 +38,7 @@ public final class ReportService {
                 GROUP BY d.donor_id, d.full_name, d.blood_group, d.rh_factor
                 ORDER BY d.donor_id
                 """);
-        add("Q3 — Yêu cầu tạo tháng trước hiện còn thiếu một phần", """
+        add("Q3. Last month's requests that are only partly filled", """
                 SELECT r.request_id, r.quantity_needed,
                        COUNT(ir.unit_id) AS fulfilled_quantity,
                        r.quantity_needed - COUNT(ir.unit_id) AS shortage_quantity
@@ -52,7 +52,7 @@ public final class ReportService {
                 HAVING r.quantity_needed - COUNT(ir.unit_id) > 0 AND COUNT(ir.unit_id) > 0
                 ORDER BY r.request_id
                 """);
-        add("Q4 — Ngân hàng có đủ bốn nhóm ABO khả dụng", """
+        add("Q4. Banks holding a usable unit of every ABO group", """
                 SELECT b.bank_id, b.bank_name
                 FROM BLOOD_BANK b
                 WHERE NOT EXISTS (
@@ -76,7 +76,7 @@ public final class ReportService {
                 )
                 ORDER BY b.bank_id
                 """);
-        add("Q5 — Số ngày trung bình từ collection đến issue", """
+        add("Q5. Average days from collection to issue per component", """
                 SELECT u.component_type,
                        AVG(DATEDIFF(ir.issue_date, u.collection_date)) AS avg_day
                 FROM ISSUE_RECORD ir
@@ -84,7 +84,7 @@ public final class ReportService {
                 GROUP BY u.component_type
                 ORDER BY u.component_type
                 """);
-        add("Q6 — Đơn vị AB+ Platelets phù hợp cho yêu cầu Critical, kèm tổng tồn", """
+        add("Q6. Usable AB+ platelet units for a Critical request, with bank stock", """
                 WITH matching_units AS (
                     SELECT b.bank_id, b.bank_name, u.unit_id, u.expiry_date
                     FROM BLOOD_BANK b
@@ -104,7 +104,7 @@ public final class ReportService {
                 JOIN bank_totals t ON t.bank_id = m.bank_id
                 ORDER BY m.expiry_date, m.bank_id, m.unit_id
                 """);
-        add("Q7 — Tỷ lệ hao hụt theo ngân hàng và thành phần kèm manager", """
+        add("Q7. Wastage rate per bank and component, with the bank manager", """
                 WITH wastage AS (
                     SELECT bank_id, component_type, COUNT(*) AS total_units,
                            SUM(CASE WHEN status = 'Expired' THEN 1 ELSE 0 END) AS expired_units
@@ -121,7 +121,7 @@ public final class ReportService {
                 JOIN STAFF s ON s.bank_id = b.bank_id AND s.role = 'Manager'
                 ORDER BY b.bank_id, w.component_type, s.staff_id
                 """);
-        add("Q8 — Yêu cầu Critical chưa có phiếu cấp", """
+        add("Q8. Critical requests with no issue record yet", """
                 SELECT r.request_id, h.hospital_name, r.request_date,
                        r.blood_group, r.rh_factor, r.component_type, r.quantity_needed
                 FROM REQUEST r JOIN HOSPITAL h ON h.hospital_id = r.hospital_id
@@ -129,7 +129,7 @@ public final class ReportService {
                   AND NOT EXISTS (SELECT 1 FROM ISSUE_RECORD i WHERE i.request_id = r.request_id)
                 ORDER BY r.request_date, r.request_id
                 """);
-        add("Q9 — Túi máu đã cấp cho yêu cầu Critical kèm ngày cấp", """
+        add("Q9. Units issued to Critical requests, with bank, hospital and staff", """
                 SELECT ir.issue_id, ir.issue_date, b.bank_id, b.bank_name,
                        h.hospital_id, h.hospital_name, u.unit_id, d.blood_group, d.rh_factor,
                        u.component_type, s.full_name AS staff_name
@@ -144,7 +144,7 @@ public final class ReportService {
                 WHERE r.urgency_level = 'Critical'
                 ORDER BY ir.issue_date, ir.issue_id
                 """);
-        add("Q10 — Bệnh viện có nhu cầu máu tăng", """
+        add("Q10. Hospitals whose demand grew compared with the month before", """
                 SELECT h.hospital_id, h.hospital_name,
                        SUM(CASE WHEN r.request_date >= DATE_FORMAT($TODAY - INTERVAL 1 MONTH, '%Y-%m-01')
                                  AND r.request_date < DATE_FORMAT($TODAY, '%Y-%m-01')
@@ -160,43 +160,30 @@ public final class ReportService {
                 HAVING last_month_demand > previous_month_demand
                 ORDER BY last_month_demand - previous_month_demand DESC, h.hospital_id
                 """);
-        add("Q11 — Unit cấp sai nhóm máu, Rh hoặc thành phần so với yêu cầu", """
-                SELECT ir.issue_id, ir.request_id, u.bank_id, u.unit_id,
-                       d.blood_group AS unit_blood_group, d.rh_factor AS unit_rh_factor,
-                       u.component_type AS unit_component,
-                       r.blood_group AS requested_blood_group, r.rh_factor AS requested_rh_factor,
-                       r.component_type AS requested_component
-                FROM ISSUE_RECORD ir
-                JOIN BLOOD_UNIT u ON ir.bank_id = u.bank_id AND ir.unit_id = u.unit_id
-                JOIN DONATION_EVENT e ON e.event_id = u.event_id
-                JOIN DONOR d ON d.donor_id = e.donor_id
-                JOIN REQUEST r ON r.request_id = ir.request_id
-                WHERE d.blood_group <> r.blood_group OR d.rh_factor <> r.rh_factor
-                UNION
-                SELECT ir.issue_id, ir.request_id, u.bank_id, u.unit_id,
-                       d.blood_group, d.rh_factor, u.component_type,
-                       r.blood_group, r.rh_factor, r.component_type
-                FROM ISSUE_RECORD ir
-                JOIN BLOOD_UNIT u ON ir.bank_id = u.bank_id AND ir.unit_id = u.unit_id
-                JOIN DONATION_EVENT e ON e.event_id = u.event_id
-                JOIN DONOR d ON d.donor_id = e.donor_id
-                JOIN REQUEST r ON r.request_id = ir.request_id
-                WHERE u.component_type <> r.component_type
-                ORDER BY issue_id
-                """);
-        add("Q12 — Nhu cầu còn thiếu theo nhóm máu và thành phần", """
-                SELECT r.blood_group, r.rh_factor, r.component_type,
-                       SUM(r.quantity_needed) AS total_requested,
-                       SUM(COALESCE(i.cnt, 0)) AS total_filled,
-                       SUM(r.quantity_needed - COALESCE(i.cnt, 0)) AS units_still_needed
+        add("Q11. Requested group and component with no usable stock (EXCEPT)", """
+                SELECT r.blood_group, r.rh_factor, r.component_type
                 FROM REQUEST r
-                LEFT JOIN (SELECT request_id, COUNT(*) AS cnt FROM ISSUE_RECORD GROUP BY request_id) i
-                    ON i.request_id = r.request_id
-                GROUP BY r.blood_group, r.rh_factor, r.component_type
-                HAVING units_still_needed > 0
+                WHERE r.status <> 'Fulfilled'
+                EXCEPT
+                SELECT d.blood_group, d.rh_factor, u.component_type
+                FROM BLOOD_UNIT u
+                JOIN DONATION_EVENT e ON e.event_id = u.event_id
+                JOIN DONOR d ON d.donor_id = e.donor_id
+                WHERE u.status = 'Available'
+                  AND u.collection_date <= $TODAY AND u.expiry_date >= $TODAY
+                ORDER BY blood_group, rh_factor, component_type
+                """);
+        add("Q12. Outstanding demand per group and component (view v_request_outstanding)", """
+                SELECT x.blood_group, x.rh_factor, x.component_type,
+                       SUM(x.quantity_needed) AS total_requested,
+                       SUM(x.quantity_filled) AS total_filled,
+                       SUM(x.outstanding_units) AS units_still_needed
+                FROM v_request_outstanding x
+                GROUP BY x.blood_group, x.rh_factor, x.component_type
+                HAVING SUM(x.outstanding_units) > 0
                 ORDER BY units_still_needed DESC
                 """);
-        add("Tồn kho khả dụng theo ngân hàng, nhóm máu, thành phần", """
+        add("Usable stock per bank, group and component", """
                 SELECT b.bank_name, d.blood_group, d.rh_factor, u.component_type,
                        COUNT(*) AS available_units, MIN(u.expiry_date) AS earliest_expiry
                 FROM BLOOD_UNIT u
@@ -216,7 +203,7 @@ public final class ReportService {
     public Rows run(String name) {
         String sql = REPORTS.get(name);
         if (sql == null) {
-            throw new AppException("Báo cáo không tồn tại: " + name);
+            throw new AppException("Unknown report: " + name);
         }
         return Sql.query(sql);
     }

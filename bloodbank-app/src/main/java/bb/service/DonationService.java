@@ -23,10 +23,10 @@ public final class DonationService {
     }
 
     public LocalDate nextEligibleDate(String donorId) {
-        Check.text(donorId, "Mã donor", 20);
+        Check.text(donorId, "Donor ID", 20);
         Rows donor = Sql.query("SELECT COUNT(*) AS n FROM DONOR WHERE donor_id = ?", donorId);
         if (donor.num(0, "n") == 0) {
-            throw new AppException("Không tìm thấy donor " + donorId + ".");
+            throw new AppException("Donor not found: " + donorId + ".");
         }
         Rows last = Sql.query("SELECT MAX(donation_date) AS last_date FROM DONATION_EVENT WHERE donor_id = ?", donorId);
         String value = last.str(0, "last_date");
@@ -34,10 +34,10 @@ public final class DonationService {
     }
 
     public String record(String donorId, String bankId, LocalDate date, int volumeMl) {
-        Check.text(donorId, "Mã donor", 20);
-        Check.text(bankId, "Ngân hàng", 20);
-        Check.notFuture(date, "Ngày hiến");
-        Check.positive(volumeMl, "Thể tích");
+        Check.text(donorId, "Donor ID", 20);
+        Check.text(bankId, "Bank", 20);
+        Check.notFuture(date, "Donation date");
+        Check.positive(volumeMl, "Volume");
         String id = Ids.next("E");
         Sql.run(c -> Sql.update(c, "INSERT INTO DONATION_EVENT (event_id, donor_id, bank_id, donation_date, volume_ml, screening_result) "
                 + "VALUES (?, ?, ?, ?, ?, 'Pending')", id, donorId, bankId, date, volumeMl));
@@ -49,14 +49,14 @@ public final class DonationService {
     }
 
     public void saveTests(String eventId, LocalDate testDate, Map<String, String> results) {
-        Check.text(eventId, "Mã đợt hiến", 20);
-        Check.notFuture(testDate, "Ngày xét nghiệm");
+        Check.text(eventId, "Event ID", 20);
+        Check.notFuture(testDate, "Test date");
         if (results == null || results.isEmpty()) {
-            throw new AppException("Chưa chọn kết quả xét nghiệm nào.");
+            throw new AppException("No test result was selected.");
         }
         for (Map.Entry<String, String> entry : results.entrySet()) {
-            Check.oneOf(entry.getKey(), "Loại xét nghiệm", TEST_TYPES.toArray(new String[0]));
-            Check.oneOf(entry.getValue(), "Kết quả", "Positive", "Negative");
+            Check.oneOf(entry.getKey(), "Test type", TEST_TYPES.toArray(new String[0]));
+            Check.oneOf(entry.getValue(), "Result", "Positive", "Negative");
         }
         Sql.run(c -> {
             for (Map.Entry<String, String> entry : results.entrySet()) {
@@ -67,12 +67,12 @@ public final class DonationService {
     }
 
     public void deleteTest(String eventId, String testType) {
-        Check.text(eventId, "Mã đợt hiến", 20);
-        Check.oneOf(testType, "Loại xét nghiệm", TEST_TYPES.toArray(new String[0]));
+        Check.text(eventId, "Event ID", 20);
+        Check.oneOf(testType, "Test type", TEST_TYPES.toArray(new String[0]));
         Sql.run(c -> {
             int changed = Sql.update(c, "DELETE FROM SCREENING_TEST WHERE event_id = ? AND test_type = ?", eventId, testType);
             if (changed != 1) {
-                throw new AppException("Không tìm thấy xét nghiệm cần xóa.");
+                throw new AppException("The test to delete was not found.");
             }
         });
     }

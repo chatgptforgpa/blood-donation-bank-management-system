@@ -24,9 +24,9 @@ public final class InventoryService {
 
     public String register(String bankId, String eventId, String component, LocalDate collectionDate,
             LocalDate expiryDate) {
-        Check.text(bankId, "Ngân hàng lưu trữ", 20);
-        Check.text(eventId, "Đợt hiến máu", 20);
-        Check.oneOf(component, "Thành phần máu", COMPONENTS);
+        Check.text(bankId, "Storage bank", 20);
+        Check.text(eventId, "Donation event", 20);
+        Check.oneOf(component, "Component", COMPONENTS);
         validateDates(collectionDate, expiryDate);
         String unitId = Ids.next("U");
         Sql.run(c -> Sql.update(c, "INSERT INTO BLOOD_UNIT (bank_id, unit_id, event_id, component_type, collection_date, expiry_date, status) "
@@ -35,19 +35,19 @@ public final class InventoryService {
     }
 
     static void validateDates(LocalDate collectionDate, LocalDate expiryDate) {
-        Check.notFuture(collectionDate, "Ngày thu thập");
+        Check.notFuture(collectionDate, "Collection date");
         if (expiryDate == null) {
-            throw new AppException("Ngày hết hạn không được để trống.");
+            throw new AppException("Expiry date is required.");
         }
         if (!expiryDate.isAfter(collectionDate)) {
-            throw new AppException("Ngày hết hạn phải sau ngày thu thập.");
+            throw new AppException("Expiry date must be after the collection date.");
         }
     }
 
     public void discard(String bankId, String unitId, String staffId) {
-        Check.text(bankId, "Ngân hàng", 20);
-        Check.text(unitId, "Đơn vị máu", 20);
-        Check.text(staffId, "Nhân viên", 20);
+        Check.text(bankId, "Bank", 20);
+        Check.text(unitId, "Blood unit", 20);
+        Check.text(staffId, "Staff", 20);
         Sql.run(c -> {
             try (CallableStatement call = c.prepareCall("{CALL d309_discard_unit(?, ?, ?)}")) {
                 call.setString(1, bankId);
@@ -72,6 +72,6 @@ public final class InventoryService {
     }
 
     public static AppException notFound(String what) {
-        return new AppException("Không tìm thấy " + what + ".");
+        return new AppException("Not found: " + what + ".");
     }
 }

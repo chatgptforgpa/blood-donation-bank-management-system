@@ -1,61 +1,63 @@
 # Blood Bank App Group 02
 
-Gói hoàn thiện ngày 16/11/2026, từ `bloodbank-app-fixed-20261115.zip`. Java Swing, JDBC, baseline DB 12 bảng. Gói này bổ sung `app.jar` từ đúng source đã kiểm tra và cập nhật tài liệu kiểm tra.
+Package completed on 16/11/2026, from `bloodbank-app-fixed-20261115.zip`. Java Swing, JDBC, 12 table database baseline. This package adds `app.jar` built from exactly the tested source and updates the test documents.
 
-## Chạy bản đã build
+## Running the built version
 
-**Nếu tải source từ GitHub:** máy cần Java 17 trở lên và Maven; chạy `build-and-test.cmd` trong thư mục này trước để tạo `app.jar`, rồi thực hiện các bước cấu hình và mở app dưới đây. JAR được tạo sau khi build và được `.gitignore` loại khỏi Git. Với ZIP đã build ngày 16/11, JAR đã có sẵn.
+**If you downloaded the source from GitHub:** you need Java 17 or later and Maven; first run `build-and-test.cmd` in this folder to create `app.jar`, then follow the configuration and start steps below. The JAR is created by the build and excluded from Git by `.gitignore`. The ZIP built on 16/11 already contains the JAR.
 
-1. Giải nén ZIP và mở thư mục `bloodbank-app`.
-2. Máy cần Java 17 trở lên. `app.jar` đã kèm Connector/J nên chạy app không cần Maven.
-3. Sao chép `db.properties.sample` thành `db.properties`, điền URL, user và password do nhóm DB cấp.
-4. Mở `run-app.cmd` hoặc chạy `java -jar app.jar`. Nếu cấu hình chưa hợp lệ, app hiện hộp thoại nhập kết nối.
+1. Extract the ZIP and open the `bloodbank-app` folder.
+2. You need Java 17 or later. `app.jar` already includes Connector/J, so running the app does not need Maven.
+3. Copy `db.properties.sample` to `db.properties` and fill in the URL, user and password given by the database team.
+4. Open `run-app.cmd` or run `java -jar app.jar`. If the configuration is not valid, the app shows a connection dialog.
 
-DB đã hoạt động thì kết nối trực tiếp; không chạy rebuild mỗi lần mở app. Gói app không tự xóa hoặc tạo lại database.
+If the database is already running, the app connects to it directly; do not run the rebuild every time you open the app. The app package never drops or recreates the database.
 
-## Chuẩn bị database khi chưa có
+## Preparing the database if you do not have one
 
-- Dùng gói DB đã chốt, ví dụ `g2_fixed_20261114_trigger_compat`. `rebuild.sql` chỉ dùng để dựng lại DB mẫu và thay dữ liệu trong schema đó.
-- Schema mặc định là `blood_bank_group2_d3`. App không thay bảng hoặc business rule DB.
-- Mẫn cấp quyền SELECT và INSERT/UPDATE/DELETE cần thiết theo chức năng; EXECUTE cho `d309_issue_unit`, `d309_discard_unit`, `d309_expire_units`. Không cấp UPDATE trực tiếp cột trạng thái dẫn xuất cho app.
-- Nếu Event Scheduler OFF, có thể dùng nút “Cập nhật đơn vị hết hạn” hoặc để quản trị viên vận hành lịch theo kế hoạch của nhóm.
+- Use the agreed database package, for example `g2_fixed_20261114_trigger_compat`. `rebuild.sql` is only for rebuilding the sample database and replaces the data in that schema.
+- The default schema is `blood_bank_group2_d3`. The app does not change tables or database business rules.
+- Man grants SELECT and the INSERT/UPDATE/DELETE each function needs, plus EXECUTE on `d309_issue_unit`, `d309_discard_unit` and `d309_expire_units`. Do not give the app direct UPDATE on derived status columns.
+- If the Event Scheduler is OFF, use the "Mark expired units" button or let the administrator run the schedule as the team planned.
 
-## Build và test
+## Build and test
 
-Đã kiểm tra bằng Maven 3.9.9, JDK 25.0.2 với target Java 17. Compiler 3.13.0, Surefire 3.2.5 và dependency được pin trong POM.
+Checked with Maven 3.9.9 and JDK 25.0.2, targeting Java 17. Compiler 3.13.0, Surefire 3.2.5 and the dependencies are pinned in the POM.
 
 ```powershell
 mvn clean verify
 ```
 
-Maven tự chạy JUnit cho transaction, biên ngày expiry và hồi quy UI. Các test này không cần MySQL. Transaction harness cũ vẫn chạy thủ công được trên Windows:
+Maven runs JUnit for the transaction, the expiry date limits and UI regressions automatically. These tests do not need MySQL. The old transaction harness can still be run by hand on Windows:
 
 ```powershell
 mvn test-compile
 java -cp "target/test-classes;target/classes" bb.service.IssuanceTxCheck
 ```
 
-JAR đầy đủ sau build là `target/bloodbank-app.jar`. `build-and-test.cmd` chạy build/test rồi cập nhật `app.jar`. Đóng app trước khi thay JAR nếu Windows báo file đang được sử dụng. Chạy source qua Maven bằng `mvn compile exec:java` vẫn được.
+The full JAR after the build is `target/bloodbank-app.jar`. `build-and-test.cmd` runs the build and tests and then updates `app.jar`. Close the app before replacing the JAR if Windows says the file is in use. Running the source through Maven with `mvn compile exec:java` also works.
 
-## Các phần đã sửa
+## What was fixed
 
-- Tab Báo cáo có đủ Q1–Q12 theo Query Matrix (Q6 cố định AB+ Platelets, Q7 có manager) và báo cáo tồn kho.
-- Reset donor xóa dữ liệu và selection; browse có số dòng; kết quả đọc cũ không đè lên filter/selection mới.
-- Nhập kho nhận expiry do người dùng nhập, bắt buộc sau collection. Collection không ở tương lai; expiry ở tương lai được phép. Không áp cứng 35/365/5 ngày từ generator.
-- Maven tự chạy test và tạo JAR có dependency, kèm file mở app.
+- 17/11/2026: the Donor tab has a delete button (it asks for confirmation; a donor who has donated is blocked by the foreign key and the app explains why in plain words). The Requests tab can edit the urgency/quantity and delete a request. Q11 now uses `EXCEPT`, Q12 reads from the view `v_request_outstanding`. `Errors` explains violations by constraint name.
+- 17/11/2026 (2): the whole interface and every error message are in English (Donor, Donations & Screening, Inventory, Requests, Issuance and Reports tabs); report names use the form `Q1. ...`, without long dashes.
+- The Reports tab has all of Q1 to Q12 from the Query Matrix (Q6 fixed to AB+ Platelets, Q7 with the manager) and a stock report.
+- Donor reset clears the data and the selection; browsing shows the row count; an old read result never overwrites a newer filter/selection.
+- Stock entry takes the expiry date typed by the user, which must be after collection. Collection cannot be in the future; a future expiry is allowed. The 35/365/5 day values of the generator are not enforced.
+- Maven runs the tests and builds a JAR with dependencies, together with a file to open the app.
 
-## Kiểm tra trên MySQL thật
+## Checks on a real MySQL server
 
-JUnit không thay thế test tích hợp. Trên DB mẫu riêng, đối chiếu:
+JUnit does not replace integration tests. On a separate sample database, check that:
 
-1. Cả Q1–Q12 khớp toàn bộ dòng theo các cột của SQL đã duyệt. Kiểm tra ngày 16/11/2026 trên seed 14/11/2026; số dòng từng report nằm trong `VALIDATION.md`. Ngày hoặc dữ liệu thay đổi thì số dòng có thể đổi.
-2. Donor mới vẫn hiến lần đầu được; đủ năm Negative làm event Passed. Nhập unit với expiry hợp lệ không trùng các mốc 35/365/5 cũng được lưu đúng.
-3. Cấp nhiều unit hợp lệ thì commit; một unit sai thì rollback toàn bộ lần cấp.
-4. Hai app cùng cấp một unit hoặc cùng lấy slot cuối: chính xác một bên thành công.
-5. Reset form, số dòng browse và kết quả tải về sai thứ tự được kiểm tra bằng JUnit headless; đây là phần kiểm tra riêng với các luồng MySQL thật.
+1. All rows of Q1 to Q12 match the approved SQL on its columns. Checked on 16/11/2026 with the 14/11/2026 seed; the row count of each report is in `VALIDATION.md`. Row counts can change when the date or the data changes.
+2. A new donor can donate for the first time; five Negative results make the event Passed. A unit with a valid expiry that is not one of the 35/365/5 values is also saved correctly.
+3. Issuing several valid units commits; one wrong unit rolls back the whole issuance.
+4. Two apps issuing the same unit, or taking the last slot of a request: exactly one succeeds.
+5. Form reset, browse row counts and load results arriving out of order are checked with headless JUnit; this is separate from the real MySQL flows.
 
-Kết quả ngày 16/11/2026: **13 JUnit test và 37 kiểm tra tích hợp MySQL đều PASS**. Maven tự chạy 13 JUnit test; 37 kiểm tra tích hợp được chạy riêng trên database thử nghiệm.
+Results of 16/11/2026: **13 JUnit tests and 37 MySQL integration checks all PASS**. Maven runs the 13 JUnit tests automatically; the 37 integration checks are run separately on a test database.
 
-Xem `VALIDATION.md` để biết các kiểm tra đã thực hiện. `CHANGES.md` ghi các thay đổi và lý do; `docs/D3-18_screen_flow_va_hop_dong_UI_Backend.md` mô tả hợp đồng thao tác.
+See `VALIDATION.md` for the checks that were run. `CHANGES.md` lists the changes and the reasons; `docs/D3-18_screen_flow_and_UI_Backend_contract.md` describes the operation contract.
 
-ZIP không chứa tài khoản DB thực tế. `db.properties.sample` để trống user/password; cấu hình riêng nằm ngoài source.
+The ZIP contains no real database account. `db.properties.sample` leaves the user/password empty; personal settings stay outside the source.

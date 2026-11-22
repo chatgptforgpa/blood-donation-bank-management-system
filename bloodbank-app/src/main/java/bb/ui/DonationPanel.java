@@ -20,7 +20,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 
 final class DonationPanel extends JPanel implements Reloadable {
-    private static final String NONE = "—";
+    private static final String NONE = "(none)";
 
     private final DonationService service = new DonationService();
     private final LookupService lookup = new LookupService();
@@ -42,19 +42,19 @@ final class DonationPanel extends JPanel implements Reloadable {
         setLayout(new BorderLayout(6, 6));
         setBorder(Ui.pad());
 
-        JButton check = new JButton("Kiểm tra điều kiện hiến");
-        JButton record = new JButton("Ghi nhận đợt hiến máu");
+        JButton check = new JButton("Check eligibility");
+        JButton record = new JButton("Record donation");
         check.addActionListener(e -> checkEligibility());
         record.addActionListener(e -> record());
         JPanel top = Ui.stack(
-                Ui.form(4, "Mã donor", donorId, "Ngân hàng", bank, "Ngày hiến", date, "Thể tích (ml)", volume),
-                Ui.flow(check, record, new JLabel("Trạng thái sàng lọc do hệ thống tự tính từ kết quả xét nghiệm.")));
+                Ui.form(4, "Donor ID", donorId, "Bank", bank, "Donation date", date, "Volume (ml)", volume),
+                Ui.flow(check, record, new JLabel("Screening status is derived by the database from the test results.")));
         add(top, BorderLayout.NORTH);
 
-        JButton find = new JButton("Lọc");
+        JButton find = new JButton("Filter");
         find.addActionListener(e -> reload());
         filter.addActionListener(e -> reload());
-        JPanel upper = Ui.stack(Ui.flow(new JLabel("Lọc theo donor:"), filter, find), Ui.browse(events));
+        JPanel upper = Ui.stack(Ui.flow(new JLabel("Filter by donor:"), filter, find), Ui.browse(events));
 
         JPanel testForm = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
         for (String type : DonationService.TEST_TYPES) {
@@ -63,16 +63,16 @@ final class DonationPanel extends JPanel implements Reloadable {
             testForm.add(new JLabel(type));
             testForm.add(box);
         }
-        testForm.add(new JLabel("Ngày XN"));
+        testForm.add(new JLabel("Test date"));
         testForm.add(testDate);
-        JButton save = new JButton("Lưu kết quả xét nghiệm");
-        JButton delete = new JButton("Xóa xét nghiệm đã chọn");
+        JButton save = new JButton("Save test results");
+        JButton delete = new JButton("Delete selected test");
         save.addActionListener(e -> saveTests());
         delete.addActionListener(e -> deleteTest());
         testForm.add(save);
         testForm.add(delete);
         JPanel lower = new JPanel(new BorderLayout(0, 4));
-        lower.add(new JLabel("Xét nghiệm của đợt hiến đang chọn (chỉ sửa được khi còn Pending):"), BorderLayout.NORTH);
+        lower.add(new JLabel("Tests of the selected donation (editable only while Pending):"), BorderLayout.NORTH);
         lower.add(Ui.browse(tests), BorderLayout.CENTER);
         lower.add(testForm, BorderLayout.SOUTH);
 
@@ -103,11 +103,11 @@ final class DonationPanel extends JPanel implements Reloadable {
                 return;
             }
             if (next == null) {
-                Ui.info(this, "Donor " + id + " chưa từng hiến máu, đủ điều kiện hiến.");
+                Ui.info(this, "Donor " + id + " has never donated and is eligible.");
             } else if (next.isAfter(Biz.today())) {
-                Ui.info(this, "Donor " + id + " chỉ được hiến lại từ " + next + " (cách tối thiểu " + Biz.DONATION_GAP_DAYS + " ngày).");
+                Ui.info(this, "Donor " + id + " may donate again from " + next + " (minimum gap " + Biz.DONATION_GAP_DAYS + " days).");
             } else {
-                Ui.info(this, "Donor " + id + " đủ điều kiện hiến (đủ " + Biz.DONATION_GAP_DAYS + " ngày kể từ lần hiến trước).");
+                Ui.info(this, "Donor " + id + " is eligible (at least " + Biz.DONATION_GAP_DAYS + " days since the last donation).");
             }
         });
     }
@@ -116,10 +116,10 @@ final class DonationPanel extends JPanel implements Reloadable {
         Ui.guard(this, () -> {
             String donor = donorId.getText().trim();
             String bankId = Ui.id(bank);
-            LocalDate d = Ui.date(date, "Ngày hiến");
-            int ml = Ui.integer(volume, "Thể tích");
+            LocalDate d = Ui.date(date, "Donation date");
+            int ml = Ui.integer(volume, "Volume");
             Ui.async(this, () -> service.record(donor, bankId, d, ml), id -> {
-                Ui.info(this, "Đã ghi nhận đợt hiến " + id + " (trạng thái Pending).");
+                Ui.info(this, "Recorded donation " + id + " (status Pending).");
                 filter.setText(donor);
                 reload();
             });
@@ -161,11 +161,11 @@ final class DonationPanel extends JPanel implements Reloadable {
     private void saveTests() {
         String eventId = Ui.selected(events, "event_id");
         if (eventId == null) {
-            Ui.info(this, "Chọn một đợt hiến máu trước.");
+            Ui.info(this, "Select a donation event first.");
             return;
         }
         Ui.guard(this, () -> {
-            LocalDate d = Ui.date(testDate, "Ngày xét nghiệm");
+            LocalDate d = Ui.date(testDate, "Test date");
             Map<String, String> results = new LinkedHashMap<>();
             for (Map.Entry<String, JComboBox<String>> entry : testBoxes.entrySet()) {
                 String value = (String) entry.getValue().getSelectedItem();
@@ -186,10 +186,10 @@ final class DonationPanel extends JPanel implements Reloadable {
         String eventId = Ui.selected(events, "event_id");
         String type = Ui.selected(tests, "test_type");
         if (eventId == null || type == null) {
-            Ui.info(this, "Chọn đợt hiến và một xét nghiệm trong bảng dưới.");
+            Ui.info(this, "Select a donation event and one test in the lower table.");
             return;
         }
-        if (!Ui.confirm(this, "Xóa xét nghiệm " + type + " của đợt " + eventId + "?")) {
+        if (!Ui.confirm(this, "Delete test " + type + " of event " + eventId + "?")) {
             return;
         }
         Ui.async(this, () -> {

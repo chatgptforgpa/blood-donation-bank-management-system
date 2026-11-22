@@ -32,7 +32,7 @@ import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
 
 final class Ui {
-    static final Option ALL = new Option(null, "Tất cả");
+    static final Option ALL = new Option(null, "All");
 
     private Ui() {
     }
@@ -60,7 +60,7 @@ final class Ui {
 
     static JPanel browse(JTable table) {
         JLabel count = new JLabel();
-        Runnable update = () -> count.setText(table.getRowCount() + " dòng");
+        Runnable update = () -> count.setText(table.getRowCount() + " rows");
         table.getModel().addTableModelListener(e -> SwingUtilities.invokeLater(update));
         table.addPropertyChangeListener("rowSorter", e -> {
             if (table.getRowSorter() != null) {
@@ -123,14 +123,14 @@ final class Ui {
 
     static JComboBox<String> comboAll(String... items) {
         String[] all = new String[items.length + 1];
-        all[0] = "Tất cả";
+        all[0] = "All";
         System.arraycopy(items, 0, all, 1, items.length);
         return new JComboBox<>(all);
     }
 
     static String value(JComboBox<String> box) {
         String v = (String) box.getSelectedItem();
-        return v == null || "Tất cả".equals(v) ? null : v;
+        return v == null || "All".equals(v) ? null : v;
     }
 
     static void setOptions(JComboBox<Option> box, List<Option> options, boolean withAll) {
@@ -161,7 +161,7 @@ final class Ui {
         try {
             return LocalDate.parse(field.getText().trim());
         } catch (DateTimeParseException e) {
-            throw new AppException(name + " phải có dạng yyyy-MM-dd.");
+            throw new AppException(name + " must be in the form yyyy-MM-dd.");
         }
     }
 
@@ -169,7 +169,7 @@ final class Ui {
         try {
             return Integer.parseInt(field.getText().trim());
         } catch (NumberFormatException e) {
-            throw new AppException(name + " phải là số nguyên.");
+            throw new AppException(name + " must be a whole number.");
         }
     }
 
@@ -262,16 +262,16 @@ final class Ui {
     }
 
     static void error(Component owner, Throwable t) {
-        String message = t instanceof AppException ? t.getMessage() : "Lỗi không mong đợi: " + t;
-        JOptionPane.showMessageDialog(owner, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+        String message = t instanceof AppException ? t.getMessage() : "Unexpected error: " + t;
+        JOptionPane.showMessageDialog(owner, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     static void info(Component owner, String message) {
-        JOptionPane.showMessageDialog(owner, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(owner, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     static boolean confirm(Component owner, String message) {
-        return JOptionPane.showConfirmDialog(owner, message, "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        return JOptionPane.showConfirmDialog(owner, message, "Confirm", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
     static void guard(Component owner, Runnable action) {

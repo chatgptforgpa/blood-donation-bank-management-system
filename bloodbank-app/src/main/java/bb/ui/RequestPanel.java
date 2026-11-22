@@ -36,21 +36,25 @@ final class RequestPanel extends JPanel implements Reloadable {
     RequestPanel() {
         setLayout(new BorderLayout(6, 6));
         setBorder(Ui.pad());
-        JButton search = new JButton("Lọc");
+        JButton search = new JButton("Filter");
         search.addActionListener(e -> search());
-        add(Ui.flow(new JLabel("Trạng thái"), filterStatus, new JLabel("Mức khẩn cấp"), filterUrgency, search), BorderLayout.NORTH);
+        add(Ui.flow(new JLabel("Status"), filterStatus, new JLabel("Urgency"), filterUrgency, search), BorderLayout.NORTH);
 
-        JPanel lower = Ui.stack(new JLabel("Các phiếu cấp của yêu cầu đang chọn:"), Ui.browse(issues));
+        JPanel lower = Ui.stack(new JLabel("Issue records of the selected request:"), Ui.browse(issues));
         JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, Ui.browse(requests), lower);
         split.setResizeWeight(0.65);
         add(split, BorderLayout.CENTER);
 
-        JButton create = new JButton("Tạo yêu cầu máu");
+        JButton create = new JButton("Create request");
+        JButton update = new JButton("Update urgency/quantity");
+        JButton delete = new JButton("Delete selected request");
         create.addActionListener(e -> create());
+        update.addActionListener(e -> update());
+        delete.addActionListener(e -> delete());
         JPanel south = Ui.stack(
-                Ui.form(4, "Bệnh viện", hospital, "Nhóm máu", group, "Rh", rh, "Thành phần", component,
-                        "Số lượng", quantity, "Mức khẩn cấp", urgency, "Ngày yêu cầu", date, "", new JLabel()),
-                Ui.flow(create, new JLabel("Yêu cầu mới luôn bắt đầu Pending; trạng thái tự cập nhật khi cấp máu.")));
+                Ui.form(4, "Hospital", hospital, "Blood group", group, "Rh", rh, "Component", component,
+                        "Quantity", quantity, "Urgency", urgency, "Request date", date, "", new JLabel()),
+                Ui.flow(create, update, delete, new JLabel("New requests start as Pending; status updates automatically on issue.")));
         add(south, BorderLayout.SOUTH);
 
         requests.getSelectionModel().addListSelectionListener(e -> {
@@ -81,10 +85,55 @@ final class RequestPanel extends JPanel implements Reloadable {
         if (id == null) {
             return;
         }
+        String level = Ui.selected(requests, "urgency_level");
+        String qty = Ui.selected(requests, "quantity_needed");
+        if (level != null) {
+            urgency.setSelectedItem(level);
+        }
+        if (qty != null) {
+            quantity.setText(qty);
+        }
         Ui.latest(this, issueLoad, () -> service.issues(id), rows -> {
             if (id.equals(Ui.selected(requests, "request_id"))) {
                 Ui.fill(issues, rows);
             }
+        });
+    }
+
+    private void update() {
+        String id = Ui.selected(requests, "request_id");
+        if (id == null) {
+            Ui.info(this, "Select a request in the table first.");
+            return;
+        }
+        Ui.guard(this, () -> {
+            String level = (String) urgency.getSelectedItem();
+            int qty = Ui.integer(quantity, "Quantity");
+            Ui.async(this, () -> {
+                service.update(id, level, qty);
+                return id;
+            }, done -> {
+                Ui.info(this, "Updated request " + done + ".");
+                search();
+            });
+        });
+    }
+
+    private void delete() {
+        String id = Ui.selected(requests, "request_id");
+        if (id == null) {
+            Ui.info(this, "Select a request in the table first.");
+            return;
+        }
+        if (!Ui.confirm(this, "Delete request " + id + "?\nThis cannot be undone.")) {
+            return;
+        }
+        Ui.async(this, () -> {
+            service.delete(id);
+            return id;
+        }, done -> {
+            Ui.info(this, "Deleted request " + done + ".");
+            search();
         });
     }
 
@@ -94,11 +143,11 @@ final class RequestPanel extends JPanel implements Reloadable {
             String g = (String) group.getSelectedItem();
             String r = (String) rh.getSelectedItem();
             String c = (String) component.getSelectedItem();
-            int qty = Ui.integer(quantity, "Số lượng");
+            int qty = Ui.integer(quantity, "Quantity");
             String level = (String) urgency.getSelectedItem();
-            LocalDate d = Ui.date(date, "Ngày yêu cầu");
+            LocalDate d = Ui.date(date, "Request date");
             Ui.async(this, () -> service.create(hospitalId, g, r, c, qty, level, d), id -> {
-                Ui.info(this, "Đã tạo yêu cầu " + id + ".");
+                Ui.info(this, "Created request " + id + ".");
                 search();
             });
         });

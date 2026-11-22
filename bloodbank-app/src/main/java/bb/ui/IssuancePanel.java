@@ -30,18 +30,18 @@ final class IssuancePanel extends JPanel implements Reloadable {
         setLayout(new BorderLayout(6, 6));
         setBorder(Ui.pad());
         units.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        JButton refresh = new JButton("Tải lại");
+        JButton refresh = new JButton("Reload");
         refresh.addActionListener(e -> reload());
-        add(Ui.flow(new JLabel("Nhân viên cấp máu:"), staff, refresh,
-                new JLabel("Đơn vị máu chỉ lấy từ ngân hàng của nhân viên (BR22).")), BorderLayout.NORTH);
+        add(Ui.flow(new JLabel("Issuing staff:"), staff, refresh,
+                new JLabel("Units come only from the staff member's own bank.")), BorderLayout.NORTH);
 
-        JPanel left = Ui.stack(new JLabel("Yêu cầu còn thiếu (ưu tiên khẩn cấp trước):"), Ui.browse(requests));
-        JPanel right = Ui.stack(new JLabel("Đơn vị phù hợp, còn hạn, sắp hết hạn trước (chọn nhiều dòng):"), Ui.browse(units));
+        JPanel left = Ui.stack(new JLabel("Open requests (most urgent first):"), Ui.browse(requests));
+        JPanel right = Ui.stack(new JLabel("Matching usable units, earliest expiry first (multi-select):"), Ui.browse(units));
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
         split.setResizeWeight(0.5);
         add(split, BorderLayout.CENTER);
 
-        JButton issue = new JButton("Cấp các đơn vị đã chọn");
+        JButton issue = new JButton("Issue selected units");
         issue.addActionListener(e -> issue());
         add(Ui.stack(info, Ui.flow(issue)), BorderLayout.SOUTH);
 
@@ -68,7 +68,7 @@ final class IssuancePanel extends JPanel implements Reloadable {
             return;
         }
         String remaining = Ui.selected(requests, "remaining");
-        info.setText("Yêu cầu " + requestId + " còn thiếu " + remaining + " đơn vị.");
+        info.setText("Request " + requestId + " still needs " + remaining + " unit(s).");
         Ui.latest(this, unitLoad, () -> service.candidateUnits(requestId, option.id()), rows -> {
             if (requestId.equals(Ui.selected(requests, "request_id"))
                     && option.id().equals(Ui.id(staff))) {
@@ -88,14 +88,14 @@ final class IssuancePanel extends JPanel implements Reloadable {
         Option option = (Option) staff.getSelectedItem();
         List<String> unitIds = Ui.selectedAll(units, "unit_id");
         if (requestId == null || option == null || unitIds.isEmpty()) {
-            Ui.info(this, "Chọn yêu cầu, nhân viên và ít nhất một đơn vị máu.");
+            Ui.info(this, "Select a request, a staff member and at least one unit.");
             return;
         }
-        if (!Ui.confirm(this, "Cấp " + unitIds.size() + " đơn vị cho yêu cầu " + requestId + "? Nếu một đơn vị lỗi, toàn bộ lần cấp sẽ bị hủy.")) {
+        if (!Ui.confirm(this, "Issue " + unitIds.size() + " unit(s) to request " + requestId + "? If one unit fails, the whole issue is rolled back.")) {
             return;
         }
         Ui.async(this, () -> service.issue(requestId, option.id(), unitIds), ids -> {
-            Ui.info(this, "Đã cấp thành công: " + String.join(", ", ids));
+            Ui.info(this, "Issued: " + String.join(", ", ids));
             reload();
             Ui.clear(units);
         });
