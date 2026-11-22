@@ -1,49 +1,49 @@
 # Blood Donation and Blood Bank Management System
 
-PDM Group 02: ứng dụng desktop Java Swing + JDBC cho quản lý donor, hiến máu, sàng lọc, kho máu, yêu cầu của bệnh viện và cấp máu.
+PDM Group 02: a Java Swing + JDBC desktop application that manages donors, donations, screening, blood inventory, hospital requests and blood issuance.
 
-Source ứng dụng là bản đã hoàn thiện ngày 16/11/2026, dựa trên bản chức năng 15/11/2026. Database giữ baseline 12 bảng; dữ liệu đi kèm là dữ liệu mẫu được sinh để kiểm thử.
+The application source is the version completed on 16/11/2026, built on the functional version of 15/11/2026. The database keeps the 12 table baseline; the data shipped with it is sample data generated for testing.
 
-## Cấu trúc
+## Structure
 
-| Thư mục | Nội dung |
+| Folder | Contents |
 |---|---|
-| [`bloodbank-app/`](bloodbank-app/) | Source Java, Maven, 13 JUnit test và hướng dẫn chạy |
-| [`database/g2/`](database/g2/) | Schema, seed 2.000 dòng, trigger/procedure/event và generator |
-| [`database/g2/QUERY/`](database/g2/QUERY/) | Q1 đến Q12 bằng MySQL |
-| [`database/g2/RA/`](database/g2/RA/) | Dữ liệu và biểu thức/tree RA theo snapshot 14/11/2026 |
-| [`database/PDM_Group02_Setup_Workbench.sql`](database/PDM_Group02_Setup_Workbench.sql) | Lựa chọn khởi tạo DB trống, kèm VIEW |
+| [`bloodbank-app/`](bloodbank-app/) | Java source, Maven, 13 JUnit tests and run instructions |
+| [`database/g2/`](database/g2/) | Schema, 2,000 row seed, triggers/procedures/event and the generator |
+| [`database/g2/QUERY/`](database/g2/QUERY/) | Q1 to Q12 in MySQL |
+| [`database/g2/RA/`](database/g2/RA/) | RA data, expressions and query trees for the 14/11/2026 snapshot |
+| [`database/PDM_Group02_Setup_Workbench.sql`](database/PDM_Group02_Setup_Workbench.sql) | Option to create an empty database, including the VIEW |
 
-## Chạy ứng dụng từ GitHub
+## Running the application from GitHub
 
-Cần Java 17 trở lên (đã chạy với JDK 25.0.2), Maven, MySQL Connector/J 8.4.0 (Maven tự tải) và MySQL 8.0.31 trở lên (đã kiểm tra trên MySQL 8.0.46 và 26.10.0). Tải repository bằng **Code → Download ZIP** hoặc clone, rồi giải nén.
+You need Java 17 or later (tested with JDK 25.0.2), Maven, MySQL Connector/J 8.4.0 (downloaded by Maven) and MySQL 8.0.31 or later (tested on MySQL 8.0.46 and 26.10.0). Get the repository with **Code → Download ZIP** or clone it, then extract it.
 
-1. **Dựng DB mẫu:** mở `database/g2/rebuild.sql` trong MySQL Workbench và chạy toàn bộ file. File này xóa và tạo lại riêng schema `blood_bank_group2_d3`, bao gồm dữ liệu đang có trong schema đó; dùng khi chủ động dựng lại DB mẫu. Ngày trong dữ liệu mẫu tự dời theo ngày chạy, nên chạy hôm nào thì 12 query cũng có kết quả.
-2. `rebuild.sql` đã tạo view `v_request_outstanding`. Có thể chạy `database/g2/test_business_rules.sql` và `database/g2/constraint_tests.sql` (với `--force`) để kiểm tra các rule; 12 query nằm trong `database/g2/QUERY/queries.sql`.
-3. Trong thư mục `bloodbank-app`, sao chép `db.properties.sample` thành `db.properties`, điền URL, tài khoản và mật khẩu MySQL của máy đang dùng.
-4. Chạy `build-and-test.cmd`. Script build, chạy 13 JUnit test và tạo `app.jar`.
-5. Mở `run-app.cmd` để chạy ứng dụng.
+1. **Build the sample database:** open `database/g2/rebuild.sql` in MySQL Workbench and run the whole file. It drops and recreates only the schema `blood_bank_group2_d3`, including any data already in that schema; use it when you deliberately want to rebuild the sample database. The dates in the sample data move with the day you run it, so the 12 queries return rows on any day.
+2. `rebuild.sql` already creates the view `v_request_outstanding`. You can run `database/g2/test_business_rules.sql` and `database/g2/constraint_tests.sql` (with `--force`) to check the rules; the 12 queries are in `database/g2/QUERY/queries.sql`.
+3. In the `bloodbank-app` folder, copy `db.properties.sample` to `db.properties` and fill in the MySQL URL, user and password of your machine.
+4. Run `build-and-test.cmd`. The script builds the project, runs the 13 JUnit tests and creates `app.jar`.
+5. Open `run-app.cmd` to start the application.
 
-JAR được tạo tại máy sau khi build. Các file `db.properties`, JAR, `target/`, log và cấu hình IDE được loại khỏi Git.
+The JAR is created on your machine by the build. `db.properties`, JAR files, `target/`, logs and IDE settings are excluded from Git.
 
-Trên hệ điều hành khác, trong `bloodbank-app` có thể dùng:
+On other operating systems, inside `bloodbank-app` you can use:
 
 ```sh
 mvn clean verify
 java -jar target/bloodbank-app.jar
 ```
 
-Nếu đã có database hoạt động, cấu hình ứng dụng để kết nối vào database đó. Xem thêm [hướng dẫn app](bloodbank-app/README.md) và [hướng dẫn database](database/g2/README.md).
+If you already have a working database, configure the application to connect to it. See also the [application guide](bloodbank-app/README.md) and the [database guide](database/g2/README.md).
 
-## Kết quả kiểm tra
+## Test results
 
-- Maven build thành công; **13 JUnit test PASS**.
-- **37 kiểm tra tích hợp MySQL thật PASS**, gồm commit/rollback và hai tình huống cấp máu đồng thời.
-- Toàn bộ dòng Q1 đến Q12 khớp các SQL đã chốt theo các cột của SQL chuẩn.
-- Ba dòng trên là kết quả ngày **16/11/2026**, trên bản source trước các sửa đổi 17 và 18/11 (Q11 EXCEPT, xóa donor/request, giao diện tiếng Anh, bắt buộc ít nhất một số điện thoại).
-- Bản hiện tại đã chạy lại ngày **18/11/2026** trên MySQL 26.10.0: 24 kiểm tra tích hợp của service (LiveCheck) PASS, kiểm tra transaction cấp máu (IssuanceTxCheck) PASS, `test_business_rules.sql` sáu cột PASS, 10/10 câu trong `constraint_tests.sql` bị từ chối đúng, 12 query đều có kết quả. **13 JUnit test chưa chạy lại trên bản này** (máy kiểm tra không có Maven); cần chạy `mvn clean verify` trước khi nộp.
+- Maven build succeeds; **13 JUnit tests PASS**.
+- **37 integration checks against a real MySQL server PASS**, including commit/rollback and two concurrent issuance scenarios.
+- Every row of Q1 to Q12 matches the agreed SQL on the columns of the reference SQL.
+- The three results above are from **16/11/2026**, on the source before the changes of 17 and 18/11 (Q11 with EXCEPT, deleting donors/requests, English user interface, at least one phone number required).
+- The current version was rerun on **18/11/2026** on MySQL 26.10.0: the 24 service integration checks (LiveCheck) PASS, the issuance transaction check (IssuanceTxCheck) PASS, all six columns of `test_business_rules.sql` PASS, 10/10 statements in `constraint_tests.sql` are rejected as expected, and all 12 queries return rows. **The 13 JUnit tests have not been rerun on this version** (the test machine has no Maven); run `mvn clean verify` before submitting.
 
-Chi tiết: [`bloodbank-app/VALIDATION.md`](bloodbank-app/VALIDATION.md). Maven tự chạy 13 JUnit test; các kiểm tra tích hợp được chạy riêng trên DB thử nghiệm.
+Details: [`bloodbank-app/VALIDATION.md`](bloodbank-app/VALIDATION.md). Maven runs the 13 JUnit tests automatically; the integration checks are run separately on a test database.
 
 ## Collaboration
 

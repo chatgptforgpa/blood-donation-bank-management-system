@@ -1,100 +1,100 @@
 # Group 02 - Database D3
 
-Gói MySQL theo baseline 12 bảng. Bản seed đi kèm có đúng 2.000 dòng, sinh với ngày 14/11/2026. Kết quả trong report lấy ngày 17/11/2026 (ngày tham chiếu). Khi chạy `rebuild.sql`, mọi cột ngày được dời theo số ngày giữa 17/11/2026 và ngày chạy (`date_shift.sql`), nên chạy hôm nào thì dữ liệu cũng là "tính đến hôm nay" và 12 query đều có kết quả.
+MySQL package for the 12 table baseline. The included seed has exactly 2,000 rows, generated on 14/11/2026. The results in the report use 17/11/2026 as the reference date. When `rebuild.sql` runs, every date column is moved by the number of days between 17/11/2026 and the day it runs (`date_shift.sql`), so on any day the data is "as of today" and all 12 queries return rows.
 
-## Dựng database mẫu
+## Building the sample database
 
-1. Dùng MySQL 8.0.46 và tài khoản có quyền tạo database, bảng, trigger, procedure và event.
-2. Trong MySQL Workbench, mở `rebuild.sql` và chạy toàn bộ file.
-3. Kiểm tra kết quả có 12 bảng, tổng seed bằng 2.000 và thông báo cài đặt business rules.
-4. Mở `test_business_rules.sql` trong một tab riêng, chạy toàn bộ file. Kết quả mong đợi là sáu cột PASS.
-5. Chạy lại toàn bộ `rebuild.sql`, rồi chạy lại smoke test để kiểm tra khả năng dựng lại.
-6. 12 query nằm trong `QUERY/queries.sql` (bản lẻ: `QUERY/SQL 1.sql` đến `SQL 12.sql`). View `v_request_outstanding` của Q12 đã được tạo trong `rebuild.sql`.
+1. Use MySQL 8.0.46 and an account that can create databases, tables, triggers, procedures and events.
+2. In MySQL Workbench, open `rebuild.sql` and run the whole file.
+3. Check that the result shows 12 tables, a seed total of 2,000 and the message that the business rules are installed.
+4. Open `test_business_rules.sql` in a separate tab and run the whole file. The expected result is six PASS columns.
+5. Run the whole `rebuild.sql` again, then the smoke test again, to check that the database can be rebuilt.
+6. The 12 queries are in `QUERY/queries.sql` (single files: `QUERY/SQL 1.sql` to `SQL 12.sql`). The view `v_request_outstanding` used by Q12 is created in `rebuild.sql`.
 
-`rebuild.sql` xóa và tạo lại riêng database `blood_bank_group2_d3`, bao gồm toàn bộ dữ liệu đang có trong database đó. Đây là điểm vào dành cho việc dựng lại database mẫu.
+`rebuild.sql` drops and recreates only the database `blood_bank_group2_d3`, including all data already in it. It is the entry point for rebuilding the sample database.
 
-File rebuild đã ghép sẵn theo thứ tự tạo bảng, nạp seed, dời ngày (`date_shift.sql`), cài business rules và bước cuối (`post_setup.sql`). Các đoạn SQL khởi tạo nằm trong cùng một file để chạy từ đầu trong Workbench.
+The rebuild file is already assembled in order: create tables, load the seed, shift the dates (`date_shift.sql`), install the business rules and the final step (`post_setup.sql`). All setup SQL is in one file so it can be run from the start in Workbench.
 
-## Sinh lại seed (không bắt buộc)
+## Regenerating the seed (optional)
 
-Không cần sinh lại seed để chạy vào ngày khác, vì `rebuild.sql` đã tự dời ngày. Chỉ sinh lại khi muốn một bộ dữ liệu mới; khi đó kết quả trong report sẽ không còn khớp. Trong thư mục này, cài thư viện và chạy generator bằng Python.
+You do not need to regenerate the seed to run on another day, because `rebuild.sql` shifts the dates itself. Only regenerate it if you want a new dataset; the results in the report will then no longer match. In this folder, install the library and run the generator with Python.
 
 ```powershell
 python -m pip install -r requirements.txt
 python generate_seed_2000.py
 ```
 
-Generator mặc định dùng ngày hiện tại ở Việt Nam và tạo lại cả `seed_2000.sql` lẫn `rebuild.sql`.
-Để kiểm tra với một ngày cụ thể, truyền tham số ngày. Ví dụ, khi chuẩn bị bộ dữ liệu cho ngày 22/11/2026, dùng lệnh sau.
+By default the generator uses today's date in Vietnam and recreates both `seed_2000.sql` and `rebuild.sql`.
+To test with a specific date, pass the date as a parameter. For example, to prepare a dataset for 22/11/2026, use the command below.
 
 ```powershell
 python generate_seed_2000.py --as-of 2026-11-22
 ```
 
-Sau khi sinh lại, chạy `rebuild.sql` và cập nhật expected/actual của QD theo cùng ngày tham chiếu. Các query thời gian cần cùng một bộ seed và cùng ngày tham chiếu để đối chiếu được kết quả.
+After regenerating, run `rebuild.sql` and update the expected/actual results of the queries for the same reference date. Time based queries need the same seed and the same reference date for their results to be compared.
 
-Thư mục `RA` trong gói này là bản chụp theo ngày 14/11/2026, gồm dữ liệu `Blood_Bank.txt`, bốn biểu thức Q1/Q2/Q3/Q8 và bốn query tree (vẽ bằng RelaX). Generator chỉ tạo lại seed và rebuild; khi dùng ngày khác, cần đồng bộ lại dữ liệu RA, các mốc ngày trong biểu thức và ảnh tree/kết quả bị thay đổi.
+The `RA` folder in this package is a snapshot of 14/11/2026, with the data `Blood_Bank.txt`, four expressions Q1/Q2/Q3/Q8 and four query trees (drawn with RelaX). The generator only recreates the seed and the rebuild file; with another date, the RA data, the dates in the expressions and the tree/result images must be updated too.
 
-Seed có các issue lịch sử và trạng thái đã tính sẵn. File rebuild nạp chúng trước khi cài trigger nghiệp vụ cho thao tác vận hành.
+The seed contains historical issue records and precomputed statuses. The rebuild file loads them before installing the business triggers used for day to day operations.
 
-## Các script nộp kèm (D5)
+## Submitted scripts (D5)
 
-Mục 2.3 "What to submit" của đề chỉ bắt nộp **hai script**: một script dựng database từ server trống, và một script thứ hai chứa 12 query có chú thích. Đề cũng bắt có các lệnh INSERT/UPDATE/DELETE, một transaction COMMIT/ROLLBACK và phải test constraint, nhưng không bắt tách thành file riêng. Cột cuối ghi rõ file nào ứng với yêu cầu nào.
+Section 2.3 "What to submit" of the assignment only requires **two scripts**: one that builds the database from an empty server, and a second one with the 12 commented queries. The assignment also requires INSERT/UPDATE/DELETE statements, a COMMIT/ROLLBACK transaction and constraint tests, but does not require separate files for them. The last column shows which file meets which requirement.
 
-| File | Nội dung | Theo đề (mục 2.3) |
+| File | Contents | Assignment (section 2.3) |
 |---|---|---|
-| `rebuild.sql` | Script duy nhất chạy từ đầu đến cuối: DROP + CREATE database, 12 bảng, seed, trigger/procedure/event, index, view `v_request_outstanding`, rồi gọi `d309_expire_units()`. Chạy được hai lần liên tiếp. | **Bắt buộc**: script dựng DB |
-| `QUERY/queries.sql` | 12 query trong một file, mỗi query có câu hỏi tiếng Anh và kỹ thuật SQL dùng. `QUERY/SQL 1.sql`… `SQL 12.sql` giữ nguyên để chạy lẻ. | **Bắt buộc**: script thứ hai |
-| `dml_transactions.sql` | INSERT/UPDATE/DELETE cho từng bảng chính, một transaction COMMIT (cấp 2 unit) và một transaction ROLLBACK. Chạy một lần ngay sau `rebuild.sql`. | Nội dung bắt buộc; tách file riêng là nhóm chọn |
-| `constraint_tests.sql` | 10 câu lệnh phải bị từ chối (trùng khóa, FK không tồn tại, CHECK, trigger). Chạy bằng `mysql --force`. | Đề bắt test, không bắt nộp file; nộp kèm làm bằng chứng |
-| `setup.sql`, `seed_2000.sql`, `date_shift.sql`, `business_rules.sql`, `post_setup.sql` | Năm phần được `generate_seed_2000.py` ghép thành `rebuild.sql`. | Không cần nộp riêng: đã nằm trong `rebuild.sql` |
-| `test_business_rules.sql` | Smoke test sáu rule nghiệp vụ, kết thúc bằng kiểm tra toàn vẹn “cấp sai nhóm máu” (luôn 0 dòng). | Không bắt buộc: test thêm của nhóm |
+| `rebuild.sql` | One script run from start to end: DROP + CREATE database, 12 tables, seed, triggers/procedures/event, indexes, view `v_request_outstanding`, then a call to `d309_expire_units()`. Can be run twice in a row. | **Required**: database build script |
+| `QUERY/queries.sql` | The 12 queries in one file, each with its English question and the SQL technique used. `QUERY/SQL 1.sql` … `SQL 12.sql` are kept for running one at a time. | **Required**: second script |
+| `dml_transactions.sql` | INSERT/UPDATE/DELETE on each main table, one COMMIT transaction (issuing 2 units) and one ROLLBACK transaction. Run once, right after `rebuild.sql`. | Required content; a separate file is the team's choice |
+| `constraint_tests.sql` | 10 statements that must be rejected (duplicate key, missing foreign key, CHECK, trigger). Run with `mysql --force`. | The assignment requires the tests, not the file; submitted as evidence |
+| `setup.sql`, `seed_2000.sql`, `date_shift.sql`, `business_rules.sql`, `post_setup.sql` | The five parts that `generate_seed_2000.py` joins into `rebuild.sql`. | Not needed separately: already inside `rebuild.sql` |
+| `test_business_rules.sql` | Smoke test of six business rules, ending with the integrity check "issued with the wrong blood group" (always 0 rows). | Optional: extra test by the team |
 
-DBMS đã kiểm tra: MySQL 8.0.46 và MySQL Community Server 26.10.0 (macOS). Q11 dùng `EXCEPT`, cần MySQL 8.0.31 trở lên.
+DBMS tested: MySQL 8.0.46 and MySQL Community Server 26.10.0 (macOS). Q11 uses `EXCEPT`, which needs MySQL 8.0.31 or later.
 
-## Thay đổi ngày 18/11/2026
+## Changes of 18/11/2026
 
-- Thêm `date_shift.sql` vào `rebuild.sql`, chạy sau seed và trước business rules. Trước đây seed là ảnh chụp cố định nên chạy ngày khác sẽ ra rỗng: từ 19/11 Q6 rỗng, từ 25/11 Q1 rỗng, sang tháng 12 Q3 và Q10 rỗng. Giờ mọi cột ngày được dời theo `DATEDIFF(CURRENT_DATE, '2026-11-17')`.
-- Đã dựng lại DB và chạy 12 query cho từng ngày từ 18/11/2026 đến 30/06/2027 (giả lập ngày bằng `SET timestamp`): không lỗi, không query nào rỗng. 10 query cho số dòng không đổi; Q3 và Q10 tính theo tháng dương lịch nên số dòng thay đổi theo ngày trong tháng (ít nhất 6 và 9 dòng).
-- `generate_seed_2000.py` có thêm `--reference-date`. Bản hiện tại tương ứng `--as-of 2026-11-14 --reference-date 2026-11-17`. Faker không cố định tên nên sinh lại sẽ ra tên và địa chỉ khác.
-- Q9 là join 8 bảng (7 lệnh INNER JOIN); sửa lại chú thích trong `queries.sql`.
-- Vẽ lại bốn query tree Q1, Q2, Q3, Q8 bằng RelaX (cùng một kiểu vẽ, cùng cỡ chữ), lưu thành `RA/tree - 1.png` … `tree - 8.png`, thay cho các ảnh `result - *.jpg` cũ. Số dòng ở từng nút khớp với kết quả MySQL.
+- `date_shift.sql` added to `rebuild.sql`, run after the seed and before the business rules. Before, the seed was a fixed snapshot, so running on another day gave empty results: from 19/11 Q6 was empty, from 25/11 Q1 was empty, and in December Q3 and Q10 were empty. Now every date column is moved by `DATEDIFF(CURRENT_DATE, '2026-11-17')`.
+- The database was rebuilt and the 12 queries were run for every day from 18/11/2026 to 30/06/2027 (simulating the date with `SET timestamp`): no errors, no empty query. 10 queries keep the same row count; Q3 and Q10 work on calendar months, so their row counts change with the day of the month (at least 6 and 9 rows).
+- `generate_seed_2000.py` has a new `--reference-date` option. The current data matches `--as-of 2026-11-14 --reference-date 2026-11-17`. Faker does not fix the names, so regenerating gives different names and addresses.
+- Q9 is an 8 table join (7 INNER JOINs); its comment in `queries.sql` was corrected.
+- The four query trees Q1, Q2, Q3, Q8 were redrawn with RelaX (same style, same font size) and saved as `RA/tree - 1.png` … `tree - 8.png`, replacing the old `result - *.jpg` images. The row count at each node matches the MySQL result.
 
-## Thay đổi ngày 17/11/2026
+## Changes of 17/11/2026
 
-- Q11 đổi thành truy vấn tập hợp `EXCEPT`: tổ hợp nhóm máu/Rh/thành phần còn được yêu cầu nhưng không còn unit khả dụng. Q11 cũ luôn rỗng nên không đạt yêu cầu “mọi query phải có kết quả”; câu kiểm tra đó chuyển vào `test_business_rules.sql`.
-- Bảng phone (thuộc tính đa trị) dùng `ON DELETE CASCADE ON UPDATE CASCADE`; các FK còn lại giữ `RESTRICT`.
-- Thêm `CHECK (close_time > open_time)` cho `BLOOD_BANK` và index `ix_request_date` cho Q3/Q10.
-- `rebuild.sql` tạo luôn view của Q12 và cập nhật unit đã quá hạn khi dựng lại vào ngày sau snapshot (`post_setup.sql`).
+- Q11 is now a set query with `EXCEPT`: the blood group/Rh/component combinations that are still requested but have no usable unit left. The old Q11 was always empty, so it did not meet "every query must return rows"; that check moved to `test_business_rules.sql`.
+- The phone tables (multivalued attributes) use `ON DELETE CASCADE ON UPDATE CASCADE`; the other foreign keys keep `RESTRICT`.
+- Added `CHECK (close_time > open_time)` on `BLOOD_BANK` and the index `ix_request_date` for Q3/Q10.
+- `rebuild.sql` also creates the Q12 view and marks overdue units as expired when the database is rebuilt after the snapshot date (`post_setup.sql`).
 
-## Dữ liệu phục vụ Query Matrix
+## Data for the Query Matrix
 
-- Có 22 request Critical, gồm 15 request đã có issue và 7 request chưa có issue.
-- Q6 giữ tình huống AB+ Platelets trong Query Matrix gốc và liệt kê unit phù hợp còn khả dụng. `S2KR0077` là một request Critical tương ứng để minh họa tình huống này.
-- Q8 dùng các request Critical chưa có issue. Q9 dùng các request Critical đã có issue.
-- Q11 (`EXCEPT`) trả về các tổ hợp còn nhu cầu nhưng hết kho; trên seed 14/11/2026 là B+ Platelets và O+ Platelets.
-- Q7 tính tỷ lệ unit Expired trên tổng unit theo ngân hàng và component, theo công thức trong bản query gốc.
+- There are 22 Critical requests: 15 with issue records and 7 without.
+- Q6 keeps the AB+ Platelets scenario of the original Query Matrix and lists the matching usable units. `S2KR0077` is a matching Critical request that illustrates this scenario.
+- Q8 uses the Critical requests without issue records. Q9 uses the Critical requests that have issue records.
+- Q11 (`EXCEPT`) returns the combinations that are still needed but out of stock; on the 14/11/2026 seed these are B+ Platelets and O+ Platelets.
+- Q7 computes the share of Expired units among all units per bank and component, with the formula of the original query.
 
-## Khi kết nối Backend
+## Connecting the backend
 
-Backend gọi `d309_issue_unit` và `d309_discard_unit` theo các tham số đã khai báo trong `business_rules.sql`. Khi sử dụng transaction JDBC, Backend sở hữu commit/rollback.
+The backend calls `d309_issue_unit` and `d309_discard_unit` with the parameters declared in `business_rules.sql`. When JDBC transactions are used, the backend owns commit/rollback.
 
-Mẫn cấu hình tài khoản database dùng cho app theo hướng dẫn ở đầu `business_rules.sql`. Tài khoản app cần quyền EXECUTE cho các procedure được sử dụng và quyền đọc/ghi cột cần thiết. Quyền cập nhật `BLOOD_UNIT.status` phải đi qua procedure để thao tác discard được kiểm tra staff cùng ngân hàng. Thông tin tài khoản thực tế do nhóm cấu hình khi tích hợp.
+Man sets up the database account used by the app as described at the top of `business_rules.sql`. The app account needs EXECUTE on the procedures it uses and read/write rights on the columns it needs. Updates of `BLOOD_UNIT.status` must go through the procedures so that discarding checks that the staff member belongs to the same bank. The real account details are configured by the team during integration.
 
-Đối với lịch hết hạn tự động, kiểm tra `SHOW VARIABLES LIKE 'event_scheduler';`. Nếu Event Scheduler đang OFF, quản trị viên bật nó hoặc sắp lịch gọi `d309_expire_units()` hằng ngày theo cách vận hành đã chọn.
+For automatic expiry, check `SHOW VARIABLES LIKE 'event_scheduler';`. If the Event Scheduler is OFF, the administrator turns it on or schedules a daily call to `d309_expire_units()` in the chosen way.
 
-## Các thay đổi trong gói này
+## Changes in this package
 
-- Khôi phục generator có Critical cho cả request đã cấp và chưa cấp, để Q8/Q9 có dữ liệu mẫu phù hợp.
-- Generator xuất thêm `rebuild.sql`, giúp một lần chạy tạo đủ database, seed và cơ chế nghiệp vụ. Điểm vào này hỗ trợ chạy lại từ đầu hai lần.
-- `requirements.txt` ghi phiên bản Faker và thay cho việc đóng gói môi trường Python cục bộ.
-- `README.md` ghi cách dựng lại, sinh seed theo ngày và các bước tích hợp Backend.
-- Giữ bộ 12 SQL và bốn RA từ `g2 (4)`, sửa duy nhất alias `eS` thành `e` trong Q4.
-- Đồng bộ dữ liệu RA với seed ngày 14/11/2026 và tạo lại query tree Q8 với kết quả bảy request chưa được cấp.
-- Xem `VALIDATION_20261114.md` để đối chiếu kết quả kiểm tra MySQL và các số dòng của Q1 đến Q12.
+- Restored the generator that creates Critical requests both with and without issue records, so Q8/Q9 have suitable sample data.
+- The generator also writes `rebuild.sql`, so one run creates the database, the seed and the business mechanisms. This entry point can be run from the start twice.
+- `requirements.txt` records the Faker version instead of packaging a local Python environment.
+- `README.md` explains how to rebuild, how to generate a seed for a given date and the backend integration steps.
+- Kept the 12 SQL queries and four RA expressions from `g2 (4)`; the only fix is the alias `eS` to `e` in Q4.
+- Synchronized the RA data with the 14/11/2026 seed and recreated the Q8 query tree with its result of seven unissued requests.
+- See `VALIDATION_20261114.md` for the MySQL check and the row counts of Q1 to Q12.
 
-## Bản sửa cú pháp trigger
+## Trigger syntax fix
 
-Hai trigger quản lý STAFF dùng `DROP TRIGGER IF EXISTS` rồi `CREATE TRIGGER`, giữ nguyên nội dung kiểm tra. MySQL hỗ trợ `CREATE TRIGGER IF NOT EXISTS` từ 8.0.29; bản này tránh dùng cú pháp đó.
+The two triggers on STAFF use `DROP TRIGGER IF EXISTS` and then `CREATE TRIGGER`, with the same checks. MySQL supports `CREATE TRIGGER IF NOT EXISTS` from 8.0.29; this version avoids that syntax.
 
-Nếu DB đã có bảng STAFF, mở `fix_staff_triggers.sql` và chạy toàn bộ file để thay hai trigger. File vá không xóa bảng hoặc nạp lại seed. Khi dựng database mẫu từ đầu mới dùng `rebuild.sql`.
+If the database already has the STAFF table, open `fix_staff_triggers.sql` and run the whole file to replace the two triggers. The patch does not drop tables or reload the seed. Use `rebuild.sql` only when building the sample database from scratch.
